@@ -1,0 +1,83 @@
+#!/usr/bin/perl
+#
+# Nagios plugin implementing remote test setup via ssh, and remote
+# result collation and reporting via http.
+# 
+# Interface intended to be similar to the standard check_by_ssh.
+#
+
+use strict;
+use LWP::Simple;
+use Nagios::Plugin;
+use Nagios::HTTP::Util;
+use YAML;
+
+my $np = Nagios::Plugin->new(
+  usage => q(Usage: %s -H <hostname> -C <cmd> -n <testname> [--freq <minutes>]),
+  version => '0.01',
+  url => 'http://www.openfusion.com.au/labs/nagios/',
+  blurb => q(This plugin checks remote command output via http.),
+);
+
+$np->add_arg(
+  spec => 'hostname|H=s',
+  label => 'ADDRESS',
+  help => 'Hostname or ip address',
+  required => 1,
+);
+$np->add_arg(
+  spec => 'cmd|command|C=s',
+  label => 'COMMAND STRING',
+  help => 'Command to execute on the remote host',
+  required => 1,
+);
+$np->add_arg(
+  spec => 'name|n=s',
+  label => 'TESTNAME',
+  help => 'Name to use for this test (unique per remote host)',
+  required => 1,
+);
+$np->add_arg(
+  spec => 'freq|f=i',
+  label => 'MINUTES',
+  help  => 'How often to run this command on the remote host (in minutes)',
+);
+$np->getopts;
+
+my $hash = Nagios::HTTP::Util::gen_hash( cmd => $np->opts->cmd, freq => $np->opts->freq );
+
+my $url = sprintf 'http://%s/nagios-http/%s', $np->opts->hostname, $np->opts->name;
+
+my $text = get( $url );
+if (! $text) {
+  submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
+  nagios_die("No data found at $url");
+}
+
+my $data = Load( $text )
+  or nagios_die("Bad results fetched from url $url: $text");
+
+# If hashes (parameters) have changed, we should to resubmit our remote cronjob
+if ($data->{hash} ne $hash) {
+  submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
+}
+
+# Return result, if available
+if ($data->{result}) {
+  print $data->{result};
+}
+else {
+  nagios_die("No results found.");
+}
+
+
+# -------------------------------------------------------------------------
+# Subroutine to set/refresh remote cronjob 
+sub submit_remote_cronjob {
+  my ($hostname, $cmd, $name, $freq) = @_;
+  my $remote_cmd = qq(sudo /usr/lib/nagios/plugins/nagios_http_cronjob -n $name -C \\"$cmd\\");
+  $remote_cmd .= " --freq $freq" if $freq;
+  print "+ Submitting remote cronjob with cmd: $remote_cmd\n" if $np->opts->verbose;
+  my $out = qx(ssh -t $hostname $remote_cmd);
+}
+
