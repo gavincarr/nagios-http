@@ -31,6 +31,7 @@ die "No result found\n" unless $result;
 my $outfile = "/var/www/nagios-http/$name";
 my $output = {
   hash => $hash,
+  mtime => time,
   result => $result,
 };
 if ($stdout) {

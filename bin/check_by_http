@@ -51,11 +51,11 @@ my $url = sprintf 'http://%s/nagios-http/%s', $np->opts->hostname, $np->opts->na
 my $text = get( $url );
 if (! $text) {
   submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
-  nagios_die("No data found at $url");
+  $np->nagios_die("No data found at $url");
 }
 
 my $data = Load( $text )
-  or nagios_die("Bad results fetched from url $url: $text");
+  or $np->nagios_die("Bad results fetched from url $url: $text");
 
 # If hashes (parameters) have changed, we should to resubmit our remote cronjob
 if ($data->{hash} ne $hash) {
@@ -67,7 +67,7 @@ if ($data->{result}) {
   print $data->{result};
 }
 else {
-  nagios_die("No results found.");
+  $np->nagios_die("No results found.");
 }
 
 

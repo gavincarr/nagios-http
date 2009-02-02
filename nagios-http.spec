@@ -8,8 +8,9 @@ Release: 1%{org_tag}%{dist}
 Source0: %{name}-%{version}.tar.gz
 License: GPL
 Group: Application/System
-Requires: nagios, nagios-http-common
+Requires: nagios-http-common
 BuildRoot: %{_tmppath}/%{name}
+BuildArch: noarch
 
 %description
 nagios-http provides a check_by_http nagios plugin, which can be
@@ -20,6 +21,7 @@ Summary: Common components for nagios-http
 Version: %{version}
 Release: 1%{org_tag}%{dist}
 Group: Application/System
+BuildArch: noarch
 
 %description common
 Common components (libraries) for nagios-http.
@@ -30,6 +32,7 @@ Version: %{version}
 Release: 1%{org_tag}%{dist}
 Group: Application/System
 Requires: nagios-plugins, httpd, nagios-http-common
+BuildArch: noarch
 
 %description remote
 nagios-http-remote provides the web infrastructure for remote 
