@@ -52,7 +52,7 @@ install -m0755 bin/* %{buildroot}/usr/lib/nagios/plugins
 
 %pre remote 
 # Add a nagios user/group 
-if ! id -u nagios >/dev/null; then
+if ! id -u nagios >/dev/null 2>&1; then
   groupadd -r nagios && useradd -g nagios -r nagios
 fi
 
