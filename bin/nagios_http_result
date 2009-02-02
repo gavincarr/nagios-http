@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+#
+# Helper script to capture the output of a cron job to file.
+#
+
+use strict;
+use File::Basename;
+use Getopt::Long;
+use YAML qw(Dump DumpFile);
+
+sub usage { die "usage: " . basename($0) . " -h <hash> -n <name>\n"; }
+
+my ($hash, $name, $result, $stdout, $verbose);
+usage
+unless GetOptions(
+  'hash|h=s'        => \$hash,
+  'name|n=s'        => \$name,
+  'result|r=s'      => \$result,
+  'stdout'          => \$stdout,
+  'verbose|v+'      => \$verbose,
+);
+usage unless $hash && $name;
+
+unless ($result) {
+  local $/ = undef;
+  $result = <>;
+}
+die "No result found\n" unless $result;
+
+# Output
+my $outfile = "/var/www/nagios-http/$name";
+my $output = {
+  hash => $hash,
+  result => $result,
+};
+if ($stdout) {
+  print Dump $output;
+}
+else {
+  DumpFile($outfile, $output);
+}
+

@@ -10,6 +10,7 @@ use strict;
 use File::Basename;
 use Getopt::Long;
 use IO::File;
+use Nagios::HTTP::Util qw(gen_hash);
 
 my $max_freq = 12 * 60;
 
@@ -46,9 +47,11 @@ else {
   $min = "*/$freq";
 }
 
+# Generate hash from current settings
+my $hash = Nagios::HTTP::Util::gen_hash( cmd => $cmd, freq => $freq );
 
 # Output
-my $cronjob = "$min $hour * * * nagios $cmd > /var/www/nagios-http/$name\n";
+my $cronjob = "$min $hour * * * nagios $cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash\n";
 if ($stdout) {
   print $cronjob;
   exit;
