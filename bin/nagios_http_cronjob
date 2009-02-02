@@ -10,14 +10,13 @@ use strict;
 use File::Basename;
 use Getopt::Long;
 use IO::File;
-use Nagios::HTTP::Util qw(gen_hash);
+use Nagios::HTTP::Util;
 
 my $max_freq = 12 * 60;
 
 sub usage { die "usage: " . basename($0) . " [--freq <minutes>] -n <name> -C <cmd>\n"; }
 
-my $freq = 5;
-my ($cmd, $name, $stdout, $verbose);
+my ($cmd, $freq, $name, $stdout, $verbose);
 usage
 unless GetOptions(
   'cmd|C=s'         => \$cmd,
@@ -28,7 +27,11 @@ unless GetOptions(
 );
 usage unless $cmd;
 
+# Generate hash from current settings
+my $hash = Nagios::HTTP::Util::gen_hash( cmd => $cmd, freq => $freq );
+
 # Map frequency to cron style $minute $hour settings
+$freq ||= 5;
 my $cron = '';
 my $min = '*';
 my $hour = '*';
@@ -47,10 +50,8 @@ else {
   $min = "*/$freq";
 }
 
-# Generate hash from current settings
-my $hash = Nagios::HTTP::Util::gen_hash( cmd => $cmd, freq => $freq );
-
 # Output
+$cmd =~ s/%/\\%/g;
 my $cronjob = "$min $hour * * * nagios $cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash\n";
 if ($stdout) {
   print $cronjob;

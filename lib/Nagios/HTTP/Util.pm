@@ -6,6 +6,13 @@ use strict;
 use Digest::SHA qw(sha256_base64);
 use Carp;
 
+sub trim {
+  my $str = @_;
+  $str =~ s/^\s+//;
+  $str =~ s/\s+$//;
+  return $str;
+}
+
 sub gen_hash {
   my (%arg) = @_;
   my $cmd = delete $arg{cmd};
@@ -14,7 +21,7 @@ sub gen_hash {
   croak "Missing 'cmd' argument to gen_hash" unless $cmd;
   croak "Missing 'freq' argument to gen_hash" unless $cmd;
 
-  my $string = $cmd . \000 . $freq;
+  my $string = trim($cmd) . "\000" . ($freq || '');
   return sha256_base64( $string );
 }
 
