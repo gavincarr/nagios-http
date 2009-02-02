@@ -9,38 +9,55 @@
 use strict;
 use File::Basename;
 use Getopt::Long;
+use IO::File;
 
 my $max_freq = 12 * 60;
 
 sub usage { die "usage: " . basename($0) . " [--freq <minutes>] -n <name> -C <cmd>\n"; }
 
 my $freq = 5;
-my ($cmd, $name, $verbose);
+my ($cmd, $name, $stdout, $verbose);
 usage
 unless GetOptions(
   'cmd|C=s'         => \$cmd,
   'name|n=s'        => \$name,
   'freq|f=i'        => \$freq,
+  'stdout'          => \$stdout,
   'verbose|v+'      => \$verbose,
 );
 usage unless $cmd;
 
+# Map frequency to cron style $minute $hour settings
 my $cron = '';
 my $min = '*';
 my $hour = '*';
 if ($freq >= 60) {
-  die "Frequency '$freq' is too large - max is $max_freq\n" 
+  die "Error: frequency '$freq' is too large - max is $max_freq\n" 
     if $freq > $max_freq;
-  die "Frequency must be a factor of 60 if greater than 60\n"
+  die "Error: frequency must be a factor of 60 if greater than 60\n"
     if $freq % 60;
-  $hour = '*/' . $freq / 60;
+  $min = 45;
+  $hour = '*/' . $freq / 60 if $freq > 60;
 }
 elsif ($freq > 30) {
-  die "Frequency '$freq' is too large - max is 30 (or a multiple of 60)\n";
+  die "Error: frequency '$freq' is too large - max is 30 (or a multiple of 60)\n";
 }
 else {
   $min = "*/$freq";
 }
 
-print "$min $hour * * * nagios $cmd > /var/www/nagios-http/$name\n";
+
+# Output
+my $cronjob = "$min $hour * * * nagios $cmd > /var/www/nagios-http/$name\n";
+if ($stdout) {
+  print $cronjob;
+  exit;
+}
+
+my $cronfile = "/etc/cron.d/nagios-http-$name";
+my $cronfh = IO::File->new( $cronfile, 'w' ) 
+  or die "Cannot write to '$cronfile': $!\n";
+print $cronfh "\n$cronjob\n"
+  or die "Print to '$cronfile' failed: $!\n";
+$cronfh->close;
 
