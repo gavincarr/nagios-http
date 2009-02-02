@@ -1,0 +1,3 @@
+EXCLUDE
+conf/nagios_http_dev.conf
+htdocs/result/*

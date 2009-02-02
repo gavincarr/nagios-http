@@ -1,0 +1,46 @@
+#!/usr/bin/perl
+#
+# Helper script to setup a cron job running as nagios with the given command.
+#
+# Ideally we should be able to do this via some kind of user cron.d facility,
+# but such a thing doesn't seem to exist, at least with linux vixie-cron.
+#
+
+use strict;
+use File::Basename;
+use Getopt::Long;
+
+my $max_freq = 12 * 60;
+
+sub usage { die "usage: " . basename($0) . " [--freq <minutes>] -n <name> -C <cmd>\n"; }
+
+my $freq = 5;
+my ($cmd, $name, $verbose);
+usage
+unless GetOptions(
+  'cmd|C=s'         => \$cmd,
+  'name|n=s'        => \$name,
+  'freq|f=i'        => \$freq,
+  'verbose|v+'      => \$verbose,
+);
+usage unless $cmd;
+
+my $cron = '';
+my $min = '*';
+my $hour = '*';
+if ($freq >= 60) {
+  die "Frequency '$freq' is too large - max is $max_freq\n" 
+    if $freq > $max_freq;
+  die "Frequency must be a factor of 60 if greater than 60\n"
+    if $freq % 60;
+  $hour = '*/' . $freq / 60;
+}
+elsif ($freq > 30) {
+  die "Frequency '$freq' is too large - max is 30 (or a multiple of 60)\n";
+}
+else {
+  $min = "*/$freq";
+}
+
+print "$min $hour * * * nagios $cmd > /var/www/nagios-http/$name\n";
+
