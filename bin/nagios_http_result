@@ -10,28 +10,32 @@ use YAML qw(Dump DumpFile);
 
 sub usage { die "usage: " . basename($0) . " -h <hash> -n <name>\n"; }
 
-my ($hash, $name, $result, $stdout, $verbose);
+my ($hash, $name, $output, $stdout, $verbose);
 usage
 unless GetOptions(
   'hash|h=s'        => \$hash,
   'name|n=s'        => \$name,
-  'result|r=s'      => \$result,
+  'output|o=s'      => \$output,
   'stdout'          => \$stdout,
   'verbose|v+'      => \$verbose,
 );
 usage unless $hash && $name;
 
-unless ($result) {
+unless ($output) {
   local $/ = undef;
-  $result = <>;
+  $output = <>;
 }
-die "No result found\n" unless $result;
+die "No output found\n" unless $output;
+
+my ($shortname, $result) = ($output =~ m/^(\w+)\s+(\w+)\s+/);
+$result ||= 'UNKNOWN';
 
 # Output
 my $outfile = "/var/www/nagios-http/$name";
 my $output = {
   hash => $hash,
   mtime => time,
+  output => $output,
   result => $result,
 };
 if ($stdout) {

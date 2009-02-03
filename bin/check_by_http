@@ -64,8 +64,9 @@ if ($data->{hash} ne $hash) {
 }
 
 # Return result, if available
-if ($data->{result}) {
-  $np->nagios_exit( OK, $data->{result} );
+if ($data->{output} && $data->{result}) {
+  my $code = $Nagios::Plugin::ERRORS{ $data->{result} } || UNKNOWN;
+  $np->nagios_exit( $code, $data->{output} );
 }
 else {
   $np->nagios_die("No results found.");
