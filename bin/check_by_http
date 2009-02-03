@@ -64,9 +64,11 @@ if ($data->{hash} ne $hash) {
   submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
 }
 
-# Return result, if available
-if ($data->{output} && $data->{result}) {
-  my $code = $Nagios::Plugin::ERRORS{ $data->{result} };
+# Return output, if available
+if ($data->{output}) {
+  my ($out1, $out2) = ($data->{output} =~ m/^(\w+)\s+(\w+)\s+/);
+  my $code = $Nagios::Plugin::ERRORS{ $out2 };
+  $code = $Nagios::Plugin::ERRORS{ $out1 } unless defined $code;
   $code = UNKNOWN unless defined $code;
   $np->nagios_exit( $code, $data->{output} );
 }
