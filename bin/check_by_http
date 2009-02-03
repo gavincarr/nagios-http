@@ -66,7 +66,7 @@ if ($data->{hash} ne $hash) {
 
 # Return output, if available
 if ($data->{output}) {
-  my ($out1, $out2) = ($data->{output} =~ m/^(\w+)\s+(\w+)\s+/);
+  my ($out1, $out2) = ($data->{output} =~ m/^(\S+)\s+(\S+)\s+/);
   my $code = $Nagios::Plugin::ERRORS{ $out2 };
   $code = $Nagios::Plugin::ERRORS{ $out1 } unless defined $code;
   $code = UNKNOWN unless defined $code;
