@@ -7,7 +7,7 @@ use Digest::SHA qw(sha256_base64);
 use Carp;
 
 sub trim {
-  my $str = @_;
+  my ($str) = @_;
   $str =~ s/^\s+//;
   $str =~ s/\s+$//;
   return $str;
