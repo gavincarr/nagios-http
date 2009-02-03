@@ -28,7 +28,8 @@ unless ($output) {
 die "No output found\n" unless $output;
 
 my ($shortname, $result) = ($output =~ m/^(\w+)\s+(\w+)\s+/);
-$result ||= 'UNKNOWN';
+$result = $shortname unless $result =~ m/^OK|WARNING|CRITICAL|UNKNOWN$/i;
+$result = 'UNKNOWN'  unless $result =~ m/^OK|WARNING|CRITICAL|UNKNOWN$/i;
 
 # Output
 my $outfile = "/var/www/nagios-http/$name";

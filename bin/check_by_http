@@ -60,6 +60,7 @@ my $data = Load( $text )
 
 # If hashes (parameters) have changed, we should to resubmit our remote cronjob
 if ($data->{hash} ne $hash) {
+  print STDERR "+ Hashes differ: local $hash != remote $data->{hash}\n" if $np->opts->verbose;
   submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
 }
 
@@ -80,7 +81,7 @@ sub submit_remote_cronjob {
   my ($hostname, $cmd, $name, $freq) = @_;
   my $remote_cmd = qq(sudo /usr/lib/nagios/plugins/nagios_http_cronjob -n $name -C \\"$cmd\\");
   $remote_cmd .= " --freq $freq" if $freq;
-  print "+ Submitting remote cronjob with cmd: $remote_cmd\n" if $np->opts->verbose;
+  print STDERR "+ Submitting remote cronjob with cmd: $remote_cmd\n" if $np->opts->verbose;
   my $out = qx(ssh -t $hostname $remote_cmd);
 }
 
