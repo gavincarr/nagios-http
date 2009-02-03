@@ -43,6 +43,7 @@ $np->add_arg(
   help  => 'How often to run this command on the remote host (in minutes)',
 );
 $np->getopts;
+$np->shortname( uc $np->opts->name );
 
 my $hash = Nagios::HTTP::Util::gen_hash( cmd => $np->opts->cmd, freq => $np->opts->freq );
 
@@ -64,7 +65,7 @@ if ($data->{hash} ne $hash) {
 
 # Return result, if available
 if ($data->{result}) {
-  print $data->{result};
+  $np->nagios_exit( OK, $data->{result} );
 }
 else {
   $np->nagios_die("No results found.");
