@@ -25,6 +25,7 @@ sub gen_hash {
   my $string = trim($cmd) . "\000" . ($freq || '');
   my $hash = sha256_base64( $string );
   print STDERR "+ gen_hash: string '$string' -> hash '$hash'\n" if $verbose;
+  return $hash;
 }
 
 1;
