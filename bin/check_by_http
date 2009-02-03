@@ -65,7 +65,8 @@ if ($data->{hash} ne $hash) {
 
 # Return result, if available
 if ($data->{output} && $data->{result}) {
-  my $code = $Nagios::Plugin::ERRORS{ $data->{result} } || UNKNOWN;
+  my $code = $Nagios::Plugin::ERRORS{ $data->{result} };
+  $code = UNKNOWN unless defined $code;
   $np->nagios_exit( $code, $data->{output} );
 }
 else {
