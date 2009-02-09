@@ -58,10 +58,19 @@ if ($stdout) {
   exit;
 }
 
+# Setup cron file
 my $cronfile = "/etc/cron.d/nagios-http-$name";
 my $cronfh = IO::File->new( $cronfile, 'w' ) 
   or die "Cannot write to '$cronfile': $!\n";
 print $cronfh "PATH=/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/bin:/usr/bin\n\n$cronjob\n"
   or die "Print to '$cronfile' failed: $!\n";
 $cronfh->close;
+
+# Also, try and run the command manually to avoid having to wait for cron
+exit(0) unless $> == 0;
+my $nagios_uid = getpwnam('nagios') or die "Cannot find nagios uid";
+my $nagios_gid = getgrnam('nagios') or die "Cannot find nagios gid";
+POSIX::setgid($nagios_gid);
+POSIX::setuid($nagios_uid);
+system("$cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash");
 
