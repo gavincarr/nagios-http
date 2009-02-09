@@ -65,6 +65,7 @@ my $data = Load( $text )
 if ($data->{hash} ne $hash) {
   print STDERR "+ Hashes differ: local $hash != remote $data->{hash}\n" if $np->opts->verbose;
   submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
+  sleep 1;
 }
 
 # Return output, if available
