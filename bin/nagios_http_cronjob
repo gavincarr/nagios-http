@@ -14,8 +14,9 @@ use Nagios::HTTP::Util;
 
 my $max_freq = 12 * 60;
 
-sub usage { die "usage: " . basename($0) . " [--freq <minutes>] -n <name> -C <cmd>\n"; }
+sub usage { die "usage: " . basename($0) . " [--freq <minutes>] [-u <url>] -n <name> -C <cmd>\n"; }
 
+my $url = 'http://nagios/nagios-http';
 my ($cmd, $freq, $name, $stdout, $verbose);
 usage
 unless GetOptions(
@@ -23,6 +24,7 @@ unless GetOptions(
   'name|n=s'        => \$name,
   'freq|f=i'        => \$freq,
   'stdout'          => \$stdout,
+  'url|u=s'         => \$url,
   'verbose|v+'      => \$verbose,
 );
 usage unless $cmd;
@@ -52,7 +54,8 @@ else {
 
 # Output
 $cmd =~ s/%/\\%/g;
-my $cronjob = "$min $hour * * * nagios $cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash\n";
+my $croncmd = "$cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash --url $url";
+my $cronjob = "$min $hour * * * nagios $croncmd\n";
 if ($stdout) {
   print $cronjob;
   exit;
@@ -67,5 +70,6 @@ print $cronfh "PATH=/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/bin:/usr/
 $cronfh->close;
 
 # Also, try and run the command manually to avoid having to wait for cron
-system("$cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash -u nagios");
+system($croncmd);
+#system("$croncmd -U nagios");
 
