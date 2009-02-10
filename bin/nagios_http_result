@@ -10,13 +10,14 @@ use YAML qw(Dump DumpFile);
 
 sub usage { die "usage: " . basename($0) . " -h <hash> -n <name>\n"; }
 
-my ($hash, $name, $output, $stdout, $verbose);
+my ($hash, $name, $output, $stdout, $user, $verbose);
 usage
 unless GetOptions(
   'hash|h=s'        => \$hash,
   'name|n=s'        => \$name,
   'output|o=s'      => \$output,
   'stdout'          => \$stdout,
+  'user|u=s'        => \$user,
   'verbose|v+'      => \$verbose,
 );
 usage unless $hash && $name;
@@ -39,5 +40,11 @@ if ($stdout) {
 }
 else {
   DumpFile($outfile, $output);
+
+  # If $user is set and we're running as root, chown the $outfile
+  if ($user && $> == 0) {
+    my ($uid,$gid) = (getpwnam($user))[2,3];
+    chown $uid, $gid, $outfile;
+  }
 }
 
