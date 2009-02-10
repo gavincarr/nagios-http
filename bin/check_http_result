@@ -1,0 +1,115 @@
+#!/usr/bin/perl
+#
+# Nagios plugin implementing remote test setup via ssh, and local
+# result collation and reporting.
+# 
+# Interface intended to be similar to the standard check_by_ssh.
+#
+
+use strict;
+use Nagios::Plugin;
+use Nagios::HTTP::Util;
+use YAML qw(LoadFile);
+
+my $np = Nagios::Plugin->new(
+  usage => q(Usage: %s -H <hostname> -C <cmd> -n <testname> [--freq <minutes>] [-d <resultdir>),
+  version => '0.01',
+  url => 'http://www.openfusion.com.au/labs/nagios/',
+  blurb => q(This plugin checks remote command output via http.),
+);
+
+$np->add_arg(
+  spec => 'hostname|H=s',
+  label => 'ADDRESS',
+  help => 'Hostname or ip address',
+  required => 1,
+);
+$np->add_arg(
+  spec => 'cmd|command|C=s',
+  label => 'COMMAND STRING',
+  help => 'Command to execute on the remote host',
+  required => 1,
+);
+$np->add_arg(
+  spec => 'name|n=s',
+  label => 'TESTNAME',
+  help => 'Name to use for this test (unique per remote host)',
+  required => 1,
+);
+$np->add_arg(
+  spec => 'freq|f=i',
+  label => 'MINUTES',
+  help  => 'How often to run this command on the remote host (in minutes)',
+);
+$np->add_arg(
+  spec => 'dir|d=s',
+  label => 'RESULT_DIR',
+  help  => 'Local directory to check for results',
+);
+$np->getopts;
+$np->shortname( uc $np->opts->name );
+
+print STDERR "\n" if $np->opts->verbose;
+
+my $hash = Nagios::HTTP::Util::gen_hash( 
+  cmd => $np->opts->cmd, freq => $np->opts->freq, verbose => $np->opts->verbose );
+
+my $dir = $np->opts->dir || '/var/www/nagios-http';
+die "Invalid results directory '$dir'" unless -d $dir;
+$dir = File::Spec->catdir( $dir, $np->opts->hostname );
+-d $dir or mkpath($dir, 0, 0770);
+
+my $data_file = File::Spec->catfile( $dir, $np->opts->name );
+
+my $data = fetch_data($data_file);
+
+if (! $data) {
+  $data = submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, 
+    $np->opts->name, $np->opts->freq, $data_file);
+}
+
+# If hashes (parameters) have changed, we should to resubmit our remote cronjob
+elsif ($data->{hash} ne $hash) {
+  print STDERR "+ Hashes differ: local $hash != remote $data->{hash}\n" 
+    if $np->opts->verbose;
+  $data = submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, 
+    $np->opts->name, $np->opts->freq, $data_file);
+}
+
+# Return output, if available
+print STDERR "\n" if $np->opts->verbose;
+if ($data && $data->{output}) {
+  my ($out1, $out2) = ($data->{output} =~ m/^(\S+)\s+(\S+)\s+/);
+  my $code = $Nagios::Plugin::ERRORS{ $out2 };
+  $code = $Nagios::Plugin::ERRORS{ $out1 } unless defined $code;
+  $code = UNKNOWN unless defined $code;
+  $np->nagios_exit( $code, $data->{output} );
+}
+else {
+  $np->nagios_die("No results found.");
+}
+
+# -------------------------------------------------------------------------
+# Subroutines
+
+sub fetch_data {
+  my $data_file = shift;
+  return unless -f $data_file;
+  return LoadFile( $data_file );
+}
+
+# Subroutine to set/refresh remote cronjob 
+sub submit_remote_cronjob {
+  my ($hostname, $cmd, $name, $freq, $data_file) = @_;
+
+  my $remote_cmd = qq(sudo /usr/lib/nagios/plugins/nagios_http_cronjob -n $name -C \\"$cmd\\");
+  $remote_cmd .= " --freq $freq" if $freq;
+  print STDERR "+ Submitting remote cronjob with cmd: $remote_cmd\n" if $np->opts->verbose;
+  my $out = qx(ssh -t $hostname $remote_cmd);
+  print $out if $np->opts->verbose;
+  sleep 1;
+
+  # Retest data file
+  return fetch_data($data_file);
+}
+
