@@ -1,5 +1,5 @@
-- need to add a freshness test to check_by_http
-
-
-
+[0.3]
++ add --url support to nagios_http_cronjob and nagios_http_result
++ rename check_by_http to check_http_result, and change to local checks, instead of remote
+- need to add a freshness test to check_http_result
 

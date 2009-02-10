@@ -8,7 +8,7 @@ Release: 1%{org_tag}%{dist}
 Source0: %{name}-%{version}.tar.gz
 License: GPL
 Group: Application/System
-Requires: nagios-http-common
+Requires: nagios-http-common, httpd
 BuildRoot: %{_tmppath}/%{name}
 BuildArch: noarch
 
@@ -31,7 +31,7 @@ Summary: Remote nagios-http web infrastructure and cron job helper
 Version: %{version}
 Release: 1%{org_tag}%{dist}
 Group: Application/System
-Requires: nagios-plugins, httpd, nagios-http-common
+Requires: nagios-plugins, nagios-http-common
 BuildArch: noarch
 
 %description remote
@@ -50,7 +50,7 @@ mkdir -p %{buildroot}%{perl_sitelib}/Nagios/HTTP
 mkdir -p %{buildroot}/usr/lib/nagios/plugins
 mkdir -p %{buildroot}%{_localstatedir}/www/%{name}
 install -m0644 conf/nagios-http.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
-install -m0644 conf/nagios-http-remote.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
+#install -m0644 conf/nagios-http-remote.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 install -m0644 lib/Nagios/HTTP/Util.pm %{buildroot}%{perl_sitelib}/Nagios/HTTP
 install -m0755 bin/* %{buildroot}/usr/lib/nagios/plugins
 
@@ -62,18 +62,21 @@ fi
 
 %files
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/nagios-http.conf
+/usr/lib/nagios/plugins/check_http_result
 /usr/lib/nagios/plugins/check_by_http
+%dir %attr(2750,nagios,apache) %{_localstatedir}/www/%{name}
 
 %files common
 %{perl_sitelib}/Nagios/HTTP/Util.pm
 
 %files remote
-%config(noreplace) %{_sysconfdir}/httpd/conf.d/nagios-http-remote.conf
 /usr/lib/nagios/plugins/nagios_http_cronjob
 /usr/lib/nagios/plugins/nagios_http_result
-%dir %attr(0755,nagios,nagios) %{_localstatedir}/www/%{name}
 
 %changelog
+* Tue Feb 10 2009 Gavin Carr <gavin@openfusion.com.au> 0.3-1
+- Invert architecture, with the web server on the check_http_result side.
+
 * Mon Feb 02 2009 Gavin Carr <gavin@openfusion.com.au> 0.1-1
 - Initial package and release.
 
