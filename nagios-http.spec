@@ -49,7 +49,8 @@ mkdir -p %{buildroot}%{_sysconfdir}/httpd/conf.d
 mkdir -p %{buildroot}%{perl_sitelib}/Nagios/HTTP
 mkdir -p %{buildroot}/usr/lib/nagios/plugins
 mkdir -p %{buildroot}%{_localstatedir}/www/%{name}
-install -m0644 conf/%{name}.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/%{name}.conf
+install -m0644 conf/nagios-http.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
+install -m0644 conf/nagios-http-remote.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 install -m0644 lib/Nagios/HTTP/Util.pm %{buildroot}%{perl_sitelib}/Nagios/HTTP
 install -m0755 bin/* %{buildroot}/usr/lib/nagios/plugins
 
@@ -60,13 +61,14 @@ if ! id -u nagios >/dev/null 2>&1; then
 fi
 
 %files
+%config(noreplace) %{_sysconfdir}/httpd/conf.d/nagios-http.conf
 /usr/lib/nagios/plugins/check_by_http
 
 %files common
 %{perl_sitelib}/Nagios/HTTP/Util.pm
 
 %files remote
-%config(noreplace) %{_sysconfdir}/httpd/conf.d/%{name}.conf
+%config(noreplace) %{_sysconfdir}/httpd/conf.d/nagios-http-remote.conf
 /usr/lib/nagios/plugins/nagios_http_cronjob
 /usr/lib/nagios/plugins/nagios_http_result
 %dir %attr(0755,nagios,nagios) %{_localstatedir}/www/%{name}
