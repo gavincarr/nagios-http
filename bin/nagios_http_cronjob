@@ -31,7 +31,7 @@ unless GetOptions(
 usage unless $cmd;
 
 # Generate hash from current settings
-my $hash = Nagios::HTTP::Util::gen_hash( cmd => $cmd, freq => $freq );
+my $hash = Nagios::HTTP::Util::gen_hash( cmd => $cmd, freq => $freq, verbose => $verbose );
 
 # Map frequency to cron style $minute $hour settings
 $freq ||= 5;
