@@ -10,6 +10,8 @@ use strict;
 use Nagios::Plugin;
 use Nagios::HTTP::Util;
 use YAML qw(LoadFile);
+use File::Path;
+use File::Spec;
 
 my $np = Nagios::Plugin->new(
   usage => q(Usage: %s -H <hostname> -C <cmd> -n <testname> [--freq <minutes>] [-d <resultdir>),

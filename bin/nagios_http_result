@@ -64,5 +64,5 @@ $req->content_type('text/x-yaml');
 $req->content(Dump $output);
 
 my $res = $ua->request($req);
-die "PUT to url '$url' failed: " . $res->status_line unless $res->success;
+die "PUT to url '$url' failed: " . $res->status_line unless $res->is_success;
 
