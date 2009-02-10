@@ -7,13 +7,18 @@ use strict;
 use File::Basename;
 use Getopt::Long;
 use Sys::Hostname;
-use YAML qw(Dump DumpFile);
+use YAML qw(Dump);
 use LWP::UserAgent;
 use HTTP::Request;
 
-sub usage { die "usage: " . basename($0) . " [-v] [-u <url>] [-U <user>] -h <hash> -n <name>\n"; }
+sub usage { 
+  print "usage: " . basename($0) . " [-v] [-u <url>] [--output <output>] -h <hash> -n <name>\n"; 
+  print "  If no --output is supplied, reads from STDIN.\n";
+  exit(1);
+}
 
-my ($help, $hash, $name, $output, $stdout, $url, $user, $verbose);
+my $url = 'http://nagios/nagios-http';
+my ($help, $hash, $name, $output, $stdout, $verbose);
 usage
 unless GetOptions(
   'help|?'          => \$help,
@@ -22,12 +27,10 @@ unless GetOptions(
   'output|o=s'      => \$output,
   'stdout'          => \$stdout,
   'url|u=s'         => \$url,
-  'user|U=s'        => \$user,
   'verbose|v+'      => \$verbose,
 );
 usage if $help;
 usage unless $hash && $name;
-warn "--user argument is ignored with --url\n" if $url && $user;
 
 unless ($output) {
   local $/ = undef;
@@ -42,35 +45,24 @@ my $output = {
   output => $output,
 };
 
-# Display / submit / save output
+# Dump output if --stdout
 if ($stdout) {
   print Dump $output;
+  exit;
 }
 
-elsif ($url) {
-  my $hostname = hostname;
-  $hostname =~ s/\..*//;
+# Do a PUT of results back to $url/$hostname/$name
+my $hostname = hostname;
+$hostname =~ s/\..*//;
 
-  $url .= '/' unless substr($url,-1) eq '/';
-  $url .= "$hostname/$name";
+$url .= '/' unless substr($url,-1) eq '/';
+$url .= "$hostname/$name";
 
-  my $ua = LWP::UserAgent->new;
-  my $req = HTTP::Request->new( PUT => $url );
-  $req->content_type('text/x-yaml');
-  $req->content(Dump $output);
+my $ua = LWP::UserAgent->new;
+my $req = HTTP::Request->new( PUT => $url );
+$req->content_type('text/x-yaml');
+$req->content(Dump $output);
 
-  my $res = $ua->request($req);
-  die "PUT to url '$url' failed: " . $res->status_line unless $res->success;
-}
-
-else {
-  my $outfile = "/var/www/nagios-http/$name";
-  DumpFile($outfile, $output);
-
-  # If $user is set and we're running as root, chown the $outfile
-  if ($user && $> == 0) {
-    my ($uid,$gid) = (getpwnam($user))[2,3];
-    chown $uid, $gid, $outfile;
-  }
-}
+my $res = $ua->request($req);
+die "PUT to url '$url' failed: " . $res->status_line unless $res->success;
 
