@@ -10,13 +10,14 @@ use strict;
 use File::Basename;
 use Getopt::Long;
 use IO::File;
+
 use Nagios::HTTP::Util;
 
 my $max_freq = 12 * 60;
+my $url = 'http://nagios/nagios-http';
 
 sub usage { die "usage: " . basename($0) . " [--freq <minutes>] [-u <url>] -n <name> -C <cmd>\n"; }
 
-my $url = 'http://nagios/nagios-http';
 my ($cmd, $freq, $name, $stdout, $verbose);
 usage
 unless GetOptions(
@@ -71,5 +72,4 @@ $cronfh->close;
 
 # Also, try and run the command manually to avoid having to wait for cron
 system($croncmd);
-#system("$croncmd -U nagios");
 
