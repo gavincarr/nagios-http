@@ -54,7 +54,7 @@ $np->shortname( uc $np->opts->name );
 print STDERR "\n" if $np->opts->verbose;
 
 my $hash = Nagios::HTTP::Util::gen_hash( 
-  cmd => $np->opts->cmd, freq => $np->opts->freq, verbose => $np->opts->verbose );
+  cmd => unescape($np->opts->cmd), freq => $np->opts->freq, verbose => $np->opts->verbose );
 
 my $dir = $np->opts->dir || '/var/www/nagios-http';
 die "Invalid results directory '$dir'" unless -d $dir;
@@ -93,6 +93,12 @@ else {
 
 # -------------------------------------------------------------------------
 # Subroutines
+
+sub unescape {
+  my $cmd = shift;
+  $cmd =~ s/\\([\\"'])/$1/g;
+  return $cmd;
+}
 
 sub fetch_data {
   my $data_file = shift;
