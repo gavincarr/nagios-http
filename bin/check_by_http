@@ -52,25 +52,21 @@ my $hash = Nagios::HTTP::Util::gen_hash(
 
 my $url = sprintf 'http://%s/nagios-http/%s', $np->opts->hostname, $np->opts->name;
 
-my $text = get( $url );
-if (! $text) {
-  submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
-  $np->nagios_die("No data found at $url");
+my $data = fetch_url($url);
+
+if (! $data) {
+  $data = submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
 }
 
-my $data = Load( $text )
-  or $np->nagios_die("Bad results fetched from url $url: $text");
-
 # If hashes (parameters) have changed, we should to resubmit our remote cronjob
-if ($data->{hash} ne $hash) {
+elsif ($data->{hash} ne $hash) {
   print STDERR "+ Hashes differ: local $hash != remote $data->{hash}\n" if $np->opts->verbose;
-  submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
-  sleep 1;
+  $data = submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, $np->opts->name, $np->opts->freq);
 }
 
 # Return output, if available
 print STDERR "\n" if $np->opts->verbose;
-if ($data->{output}) {
+if ($data && $data->{output}) {
   my ($out1, $out2) = ($data->{output} =~ m/^(\S+)\s+(\S+)\s+/);
   my $code = $Nagios::Plugin::ERRORS{ $out2 };
   $code = $Nagios::Plugin::ERRORS{ $out1 } unless defined $code;
@@ -81,14 +77,27 @@ else {
   $np->nagios_die("No results found.");
 }
 
-
 # -------------------------------------------------------------------------
+# Subroutines
+
+sub fetch_url {
+  my $url = shift;
+
+  my $text = get( $url ) or return;
+  return Load( $text );
+}
+
 # Subroutine to set/refresh remote cronjob 
 sub submit_remote_cronjob {
   my ($hostname, $cmd, $name, $freq) = @_;
+
   my $remote_cmd = qq(sudo /usr/lib/nagios/plugins/nagios_http_cronjob -n $name -C \\"$cmd\\");
   $remote_cmd .= " --freq $freq" if $freq;
   print STDERR "+ Submitting remote cronjob with cmd: $remote_cmd\n" if $np->opts->verbose;
   my $out = qx(ssh -t $hostname $remote_cmd);
+  print $out if $np->opts->verbose;
+
+  # Refetch url data
+  return fetch_url($url);
 }
 
