@@ -8,7 +8,7 @@ Release: 1%{org_tag}%{dist}
 Source0: %{name}-%{version}.tar.gz
 License: GPL
 Group: Application/System
-Requires: nagios-http-common, httpd
+Requires: nagios-http-common = %{version}, httpd
 BuildRoot: %{_tmppath}/%{name}
 BuildArch: noarch
 
@@ -31,7 +31,7 @@ Summary: Remote nagios-http web infrastructure and cron job helper
 Version: %{version}
 Release: 1%{org_tag}%{dist}
 Group: Application/System
-Requires: nagios-plugins, nagios-http-common
+Requires: nagios-plugins, nagios-http-common = %{version}
 BuildArch: noarch
 
 %description remote
