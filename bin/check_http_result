@@ -13,8 +13,10 @@ use YAML qw(LoadFile);
 use File::Path;
 use File::Spec;
 
+my $FRESHNESS_FUDGE_SECONDS = 120;
+
 my $np = Nagios::Plugin->new(
-  usage => q(Usage: %s -H <hostname> -C <cmd> -n <testname> [--freq <minutes>] [-d <resultdir>),
+  usage => q(Usage: %s -H <hostname> -C <cmd> -n <testname> [--freq <mins>] [-d <resultdir>] [-u <posturl>]),
   version => '0.01',
   url => 'http://www.openfusion.com.au/labs/nagios/',
   blurb => q(This plugin checks remote command output via http.),
@@ -42,11 +44,19 @@ $np->add_arg(
   spec => 'freq|f=i',
   label => 'MINUTES',
   help  => 'How often to run this command on the remote host (in minutes)',
+  default => 5,
 );
 $np->add_arg(
   spec => 'dir|d=s',
   label => 'RESULT_DIR',
   help  => 'Local directory to check for results',
+  default => '/var/www/nagios-http',
+);
+$np->add_arg(
+  spec => 'url|u=s',
+  label => 'URL',
+  help  => 'URL to which remote results should be posted (may repeat)',
+  default => 'http://nagios/nagios-http',
 );
 $np->getopts;
 $np->shortname( uc $np->opts->name );
@@ -56,7 +66,7 @@ print STDERR "\n" if $np->opts->verbose;
 my $hash = Nagios::HTTP::Util::gen_hash( 
   cmd => unescape($np->opts->cmd), freq => $np->opts->freq, verbose => $np->opts->verbose );
 
-my $dir = $np->opts->dir || '/var/www/nagios-http';
+my $dir = $np->opts->dir;
 die "Invalid results directory '$dir'" unless -d $dir;
 $dir = File::Spec->catdir( $dir, $np->opts->hostname );
 -d $dir or mkpath($dir, 0, 0770);
@@ -66,16 +76,19 @@ my $data_file = File::Spec->catfile( $dir, $np->opts->name );
 my $data = fetch_data($data_file);
 
 if (! $data) {
-  $data = submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, 
-    $np->opts->name, $np->opts->freq, $data_file);
+  $data = submit_remote_cronjob($np->opts, $data_file);
 }
 
 # If hashes (parameters) have changed, we should to resubmit our remote cronjob
 elsif ($data->{hash} ne $hash) {
   print STDERR "+ Hashes differ: local $hash != remote $data->{hash}\n" 
     if $np->opts->verbose;
-  $data = submit_remote_cronjob($np->opts->hostname, $np->opts->cmd, 
-    $np->opts->name, $np->opts->freq, $data_file);
+  $data = submit_remote_cronjob($np->opts, $data_file);
+}
+
+# Freshness check
+elsif (time - $data->{mtime} > $np->opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
+  $np->nagios_die("Results too old (" . (time - $data->{mtime}) . "s) (or clocks wrong?)");
 }
 
 # Return output, if available
@@ -108,13 +121,18 @@ sub fetch_data {
 
 # Subroutine to set/refresh remote cronjob 
 sub submit_remote_cronjob {
-  my ($hostname, $cmd, $name, $freq, $data_file) = @_;
+  my ($opts, $data_file) = @_;
+  
+  my $hostname = $opts->hostname;
+  my $cmd = $opts->cmd;
+  my $name = $opts->name;
 
   my $remote_cmd = qq(sudo /usr/lib/nagios/plugins/nagios_http_cronjob -n $name -C \\"$cmd\\");
-  $remote_cmd .= " --freq $freq" if $freq;
-  print STDERR "+ Submitting remote cronjob with cmd: $remote_cmd\n" if $np->opts->verbose;
+  $remote_cmd .= " --freq " . $opts->freq if $opts->freq;
+  $remote_cmd .= " --url "  . $opts->url  if $opts->url;
+  print STDERR "+ Submitting remote cronjob with cmd: $remote_cmd\n" if $opts->verbose;
   my $out = qx(ssh -t $hostname $remote_cmd);
-  print $out if $np->opts->verbose;
+  print $out if $opts->verbose;
   sleep 1;
 
   # Retest data file
