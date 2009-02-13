@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Helper script to capture the output of a cron job to file.
+# Helper script to capture the output of a cron job and post it somewhere.
 #
 
 use strict;
@@ -64,5 +64,10 @@ $req->content_type('text/x-yaml');
 $req->content(Dump $output);
 
 my $res = $ua->request($req);
-die "PUT to url '$url' failed: " . $res->status_line unless $res->is_success;
+
+# Now only die if verbose: in general this just becomes cron noise,
+# and the failure will get picked up anyway via the check_http_result 
+# freshness check
+die "PUT to url '$url' failed: " . $res->status_line 
+  if $verbose && ! $res->is_success
 
