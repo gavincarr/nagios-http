@@ -95,6 +95,8 @@ elsif (time - $data->{mtime} > $np->opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) 
 print STDERR "\n" if $np->opts->verbose;
 if ($data && $data->{output}) {
   my ($out1, $out2) = ($data->{output} =~ m/^(\S+)\s+(\S+)\s+/);
+  $out1 =~ s/\W+//g;
+  $out2 =~ s/\W+//g;
   my $code = $Nagios::Plugin::ERRORS{ $out2 };
   $code = $Nagios::Plugin::ERRORS{ $out1 } unless defined $code;
   $code = UNKNOWN unless defined $code;
