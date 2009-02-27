@@ -3,5 +3,8 @@
 + rename check_by_http to check_http_result, and change to local checks, instead of remote
 + add a freshness test to check_http_result
 
+- need to add a way to specify the remote hostname to use for results submission,
+  instead of Sys::Hostname (e.g. sydgw vs. sydgw1)
+
 - figure out how to turn on --extra-opts from within nagios_http_cronjob
 

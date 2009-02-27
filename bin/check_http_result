@@ -69,7 +69,7 @@ my $hash = Nagios::HTTP::Util::gen_hash(
 my $dir = $np->opts->dir;
 die "Invalid results directory '$dir'" unless -d $dir;
 $dir = File::Spec->catdir( $dir, $np->opts->hostname );
--d $dir or mkpath($dir, 0, 0770);
+-d $dir or umask(0007) && mkpath($dir);
 
 my $data_file = File::Spec->catfile( $dir, $np->opts->name );
 
