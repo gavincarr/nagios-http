@@ -12,17 +12,18 @@ use LWP::UserAgent;
 use HTTP::Request;
 
 sub usage { 
-  print "usage: " . basename($0) . " [-v] [-u <url>] [--output <output>] -h <hash> -n <name>\n"; 
+  print "usage: " . basename($0) . " [-v] [-u <url>] [-H <hostname>] [--output <output>] -h <hash> -n <name>\n"; 
   print "  If no --output is supplied, reads from STDIN.\n";
   exit(1);
 }
 
 my $url = 'http://nagios/nagios-http';
-my ($help, $hash, $name, $output, $stdout, $verbose);
+my ($help, $hash, $hostname, $name, $output, $stdout, $verbose);
 usage
 unless GetOptions(
   'help|?'          => \$help,
   'hash|h=s'        => \$hash,
+  'hostname|H=s'    => \$hostname,
   'name|n=s'        => \$name,
   'output|o=s'      => \$output,
   'stdout'          => \$stdout,
@@ -52,7 +53,7 @@ if ($stdout) {
 }
 
 # Do a PUT of results back to $url/$hostname/$name
-my $hostname = hostname;
+$hostname ||= hostname;
 $hostname =~ s/\..*//;
 
 $url .= '/' unless substr($url,-1) eq '/';
