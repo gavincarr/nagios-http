@@ -70,8 +70,8 @@ fi
 %{perl_sitelib}/Nagios/HTTP/Util.pm
 
 %files remote
-/usr/lib/nagios/plugins/nagios_http_cronjob
-/usr/lib/nagios/plugins/nagios_http_result
+%attr(4750,root,nagios) /usr/lib/nagios/plugins/nagios_http_cronjob
+%attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
 * Tue Feb 10 2009 Gavin Carr <gavin@openfusion.com.au> 0.3-1
