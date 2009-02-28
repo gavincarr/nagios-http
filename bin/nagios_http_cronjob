@@ -57,7 +57,7 @@ if ($freq) {
   }
 }
 if ($url) {
-  if ($url =~ m! ^([-\w:/?&;%,@\#]+)$ !x) {
+  if ($url =~ m! ^([-\w:/.?&;%,+@\#]+)$ !x) {
     $url = $1;
   } else {
     die "Invalid characters in url '$url'";
