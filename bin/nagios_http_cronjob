@@ -31,6 +31,39 @@ unless GetOptions(
 );
 usage unless $cmd;
 
+# Untaint parameters
+if ($name =~ m/^([-\w]+)$/) {
+  $name = $1;
+} else {
+  die "Invalid characters in name '$name'";
+}
+if ($cmd =~ m! ^([-\w\s'",.;@\#/\\\$=%&?&\(\)]+)$ !x) {
+  $cmd = $1;
+} else {
+  die "Invalid characters in cmd '$cmd'";
+}
+if ($hostname) {
+  if ($hostname =~ m! ^([\w]+)$ !x) {
+    $hostname = $1;
+  } else {
+    die "Invalid characters in hostname '$hostname'";
+  }
+}
+if ($freq) {
+  if ($freq =~ m! ^([\d]+)$ !x) {
+    $freq = $1;
+  } else {
+    die "Invalid characters in frequency '$freq'";
+  }
+}
+if ($url) {
+  if ($url =~ m! ^([-\w:/?&;%,@\#]+)$ !x) {
+    $url = $1;
+  } else {
+    die "Invalid characters in url '$url'";
+  }
+}
+
 # Generate hash from current settings
 my $hash = Nagios::HTTP::Util::gen_hash( cmd => $cmd, freq => $freq, verbose => $verbose );
 
@@ -73,5 +106,6 @@ print $cronfh "PATH=/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/bin:/usr/
 $cronfh->close;
 
 # Also, try and run the command manually to avoid having to wait for cron
+$ENV{PATH} = '/bin:/usr/bin:/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins';
 system($croncmd);
 
