@@ -8,7 +8,7 @@
 
 use strict;
 use File::Basename;
-use Getopt::Long;
+use Getopt::Long qw(:config no_ignore_case bundling);
 use IO::File;
 
 use Nagios::HTTP::Util;

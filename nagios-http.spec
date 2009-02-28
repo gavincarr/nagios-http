@@ -74,6 +74,10 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Sat Feb 28 2009 Gavin Carr <gavin@openfusion.com.au> 0.4-1
+- Make nagios_http_cronjob root setuid, instead of having to setup sudo.
+- Add remote_hostname argument check_http_result.
+
 * Tue Feb 10 2009 Gavin Carr <gavin@openfusion.com.au> 0.3-1
 - Invert architecture, with the web server on the check_http_result side.
 
