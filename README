@@ -1,0 +1,18 @@
+README
+======
+
+nagios-http is a nagios active check framework that is an alternative 
+to the conventional check_by_ssh and NRPE approaches. Like check_by_ssh 
+and unlike NRPE, nagios-http check configuration is centralised on your 
+nagios server (rather than being distributed), and doesn't require any
+special infrastructure on your clients (like an NRPE daemon). Unlike 
+check_by_ssh, checks don't require a relatively expensive remote 
+connection each time, so they should scale better to large 
+installations.
+
+The basic idea behind nagios-http is that checks are done using remote 
+cron jobs on the client machines, and results are pushed back to the 
+nagios server via HTTP. So checks are active, but asynchronous (or 
+semi-synchronous), and local file checks on the nagios server, unless
+the check cron job needs to created or updated.
+
