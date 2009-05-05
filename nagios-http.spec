@@ -31,7 +31,7 @@ Summary: Remote nagios-http web infrastructure and cron job helper
 Version: %{version}
 Release: 1%{org_tag}%{dist}
 Group: Application/System
-Requires: perl-suidperl, nagios-plugins, nagios-http-common = %{version}
+Requires: perl-suidperl, nagios-plugins, nagios-http-common = %{version}, perl-Crypt-SSLeay
 BuildArch: noarch
 
 %description remote
@@ -74,6 +74,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Tue May 05 2009 Gavin Carr <gavin@openfusion.com.au> 0.5-1
+- Remove remote_hostname from check_http_result, and just pass -H hostname.
+
 * Sat Feb 28 2009 Gavin Carr <gavin@openfusion.com.au> 0.4-1
 - Make nagios_http_cronjob root setuid, instead of having to setup sudo.
 - Add remote_hostname argument check_http_result.
