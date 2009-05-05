@@ -69,6 +69,12 @@ my $res = $ua->request($req);
 # Now only die if verbose: in general this just becomes cron noise,
 # and the failure will get picked up anyway via the check_http_result 
 # freshness check
-die "PUT to url '$url' failed: " . $res->status_line 
-  if $verbose && ! $res->is_success
+if ($verbose) {
+  if (! $res->is_success) {
+    die "PUT to url '$url' failed: " . $res->status_line;
+  }
+  else {
+    printf STDERR "PUT to url '$url' successful: %s\n", $res->status_line;
+  }
+}
 
