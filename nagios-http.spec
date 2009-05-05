@@ -2,31 +2,33 @@
 %define perl_sitelib /usr/lib/perl5/site_perl
 
 Summary: check_by_http plugin for nagios master
-Name: nagios-http
+Name: nagios-http-master
 Version: %{version}
 Release: 1%{org_tag}
-Source0: %{name}-%{version}.tar.gz
+Source0: nagios-http-%{version}.tar.gz
 License: GPL
 Group: Application/System
 Requires: nagios-http-common = %{version}, httpd
 BuildRoot: %{_tmppath}/%{name}
 BuildArch: noarch
+Obsoletes: nagios-http
+Provides: nagios-http
 
 %description
 nagios-http provides a check_by_http nagios plugin, which can be
 used to check and collate results from nagios-http-remote instances.
 
-%package common
+%package -n nagios-http-common
 Summary: Common components for nagios-http
 Version: %{version}
 Release: 1%{org_tag}
 Group: Application/System
 BuildArch: noarch
 
-%description common
+%description -n nagios-http-common
 Common components (libraries) for nagios-http.
 
-%package remote
+%package -n nagios-http-remote
 Summary: Remote nagios-http web infrastructure and cron job helper 
 Version: %{version}
 Release: 1%{org_tag}
@@ -34,13 +36,13 @@ Group: Application/System
 Requires: perl-suidperl, nagios-plugins, nagios-http-common = %{version}, perl-Crypt-SSLeay
 BuildArch: noarch
 
-%description remote
+%description -n nagios-http-remote
 nagios-http-remote provides the web infrastructure for remote 
 nagios-http nodes, and a cron job helper for setting up cron
 entries.
 
 %prep
-%setup
+%setup -n nagios-http-%{version}
 
 %build
 
@@ -54,7 +56,7 @@ install -m0644 conf/nagios-http.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 install -m0644 lib/Nagios/HTTP/Util.pm %{buildroot}%{perl_sitelib}/Nagios/HTTP
 install -m0755 bin/* %{buildroot}/usr/lib/nagios/plugins
 
-%pre remote 
+%pre -n nagios-http-remote 
 # Add a nagios user/group 
 if ! id -u nagios >/dev/null 2>&1; then
   groupadd -r nagios && useradd -r -m -g nagios nagios
@@ -66,10 +68,10 @@ fi
 /usr/lib/nagios/plugins/check_by_http
 %dir %attr(2750,nagios,apache) %{_localstatedir}/www/%{name}
 
-%files common
+%files -n nagios-http-common
 %{perl_sitelib}/Nagios/HTTP/Util.pm
 
-%files remote
+%files -n nagios-http-remote
 # nagios_http_cronjob needs to be setuid, to create jobs in /etc/cron.d
 %attr(4750,root,nagios) /usr/lib/nagios/plugins/nagios_http_cronjob
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
