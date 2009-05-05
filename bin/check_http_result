@@ -83,16 +83,24 @@ if (! $data) {
   $data = submit_remote_cronjob($np->opts, $data_file);
 }
 
-# If hashes (parameters) have changed, we should to resubmit our remote cronjob
+# If hashes (parameters) have changed, we should resubmit our remote cronjob
 elsif ($data->{hash} ne $hash) {
-  print STDERR "+ Hashes differ: local $hash != remote $data->{hash}\n" 
+  print STDERR "+ Hashes differ: local $hash != remote $data->{hash} - attempting refresh\n" 
     if $np->opts->verbose;
   $data = submit_remote_cronjob($np->opts, $data_file);
 }
 
 # Freshness check
 elsif (time - $data->{mtime} > $np->opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
-  $np->nagios_die("Results too old (" . (time - $data->{mtime}) . "s) (or clocks wrong?)");
+  # Out of date - try resubmitting
+  print STDERR "+ Freshness check failed - attempting refresh\n"
+    if $np->opts->verbose;
+  $data = submit_remote_cronjob($np->opts, $data_file);
+  if ($data && time - $data->{mtime} > $np->opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
+    print STDERR "+ Freshness check still failed - giving up\n"
+      if $np->opts->verbose;
+    $np->nagios_die("Results too old (" . (time - $data->{mtime}) . "s) (or clocks wrong?)");
+  }
 }
 
 # Return output, if available
