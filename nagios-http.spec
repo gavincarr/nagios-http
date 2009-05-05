@@ -33,7 +33,7 @@ Summary: Remote nagios-http web infrastructure and cron job helper
 Version: %{version}
 Release: 1%{org_tag}
 Group: Application/System
-Requires: perl-suidperl, nagios-plugins, nagios-http-common = %{version}, perl-Crypt-SSLeay
+Requires: perl-suidperl, nagios-plugins, nagios-http-common = %{version}
 BuildArch: noarch
 
 %description -n nagios-http-remote
