@@ -4,7 +4,7 @@
 Summary: check_by_http plugin for nagios master
 Name: nagios-http
 Version: %{version}
-Release: 1%{org_tag}%{dist}
+Release: 1%{org_tag}
 Source0: %{name}-%{version}.tar.gz
 License: GPL
 Group: Application/System
@@ -19,7 +19,7 @@ used to check and collate results from nagios-http-remote instances.
 %package common
 Summary: Common components for nagios-http
 Version: %{version}
-Release: 1%{org_tag}%{dist}
+Release: 1%{org_tag}
 Group: Application/System
 BuildArch: noarch
 
@@ -29,7 +29,7 @@ Common components (libraries) for nagios-http.
 %package remote
 Summary: Remote nagios-http web infrastructure and cron job helper 
 Version: %{version}
-Release: 1%{org_tag}%{dist}
+Release: 1%{org_tag}
 Group: Application/System
 Requires: perl-suidperl, nagios-plugins, nagios-http-common = %{version}, perl-Crypt-SSLeay
 BuildArch: noarch
@@ -70,6 +70,7 @@ fi
 %{perl_sitelib}/Nagios/HTTP/Util.pm
 
 %files remote
+# nagios_http_cronjob needs to be setuid, to create jobs in /etc/cron.d
 %attr(4750,root,nagios) /usr/lib/nagios/plugins/nagios_http_cronjob
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
