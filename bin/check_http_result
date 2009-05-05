@@ -58,10 +58,6 @@ $np->add_arg(
   help  => 'URL to which remote results should be posted (may repeat)',
   default => 'http://nagios/nagios-http',
 );
-$np->add_arg(
-  spec => 'remote_hostname|remote-hostname|=s',
-  help  => 'Hostname remote host should use when submitting results',
-);
 $np->getopts;
 $np->shortname( uc $np->opts->name );
 
@@ -142,9 +138,9 @@ sub submit_remote_cronjob {
   my $name = $opts->name;
 
   my $remote_cmd = qq(/usr/lib/nagios/plugins/nagios_http_cronjob -n $name -C \\"$cmd\\");
+  $remote_cmd .= " --hostname "  . $opts->hostname;
   $remote_cmd .= " --freq " . $opts->freq if $opts->freq;
   $remote_cmd .= " --url "  . $opts->url  if $opts->url;
-  $remote_cmd .= " --hostname "  . $opts->remote_hostname  if $opts->remote_hostname;
   print STDERR "+ Submitting remote cronjob with cmd: $remote_cmd\n" if $opts->verbose;
   my $out = qx(ssh -t $hostname $remote_cmd);
   print $out if $opts->verbose;
