@@ -9,7 +9,7 @@ Source0: nagios-http-%{version}.tar.gz
 License: GPL
 Group: Application/System
 Requires: nagios-http-common = %{version}, httpd
-BuildRoot: %{_tmppath}/%{name}
+BuildRoot: %{_tmppath}/nagios-http
 BuildArch: noarch
 Obsoletes: nagios-http
 Provides: nagios-http
@@ -50,7 +50,7 @@ entries.
 mkdir -p %{buildroot}%{_sysconfdir}/httpd/conf.d
 mkdir -p %{buildroot}%{perl_sitelib}/Nagios/HTTP
 mkdir -p %{buildroot}/usr/lib/nagios/plugins
-mkdir -p %{buildroot}%{_localstatedir}/www/%{name}
+mkdir -p %{buildroot}%{_localstatedir}/www/nagios-http
 install -m0644 conf/nagios-http.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 #install -m0644 conf/nagios-http-remote.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 install -m0644 lib/Nagios/HTTP/Util.pm %{buildroot}%{perl_sitelib}/Nagios/HTTP
@@ -66,7 +66,7 @@ fi
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/nagios-http.conf
 /usr/lib/nagios/plugins/check_http_result
 /usr/lib/nagios/plugins/check_by_http
-%dir %attr(2750,nagios,apache) %{_localstatedir}/www/%{name}
+%dir %attr(2750,nagios,apache) %{_localstatedir}/www/nagios-http
 
 %files -n nagios-http-common
 %{perl_sitelib}/Nagios/HTTP/Util.pm
