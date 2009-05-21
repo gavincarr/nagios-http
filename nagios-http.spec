@@ -65,7 +65,6 @@ fi
 %files
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/nagios-http.conf
 /usr/lib/nagios/plugins/check_http_result
-/usr/lib/nagios/plugins/check_by_http
 %dir %attr(2750,nagios,apache) %{_localstatedir}/www/nagios-http
 
 %files -n nagios-http-common
@@ -77,6 +76,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Tue May 19 2009 Gavin Carr <gavin@openfusion.com.au> 0.6-1
+- Add --env support to check_http_result and nagios_http_cronjob.
+
 * Tue May 05 2009 Gavin Carr <gavin@openfusion.com.au> 0.5-1
 - Remove remote_hostname from check_http_result, and just pass -H hostname.
 

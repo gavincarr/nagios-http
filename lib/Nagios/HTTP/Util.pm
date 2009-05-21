@@ -15,14 +15,17 @@ sub trim {
 
 sub gen_hash {
   my (%arg) = @_;
-  my $cmd = delete $arg{cmd};
-  my $freq = delete $arg{freq};
+  my $cmd = delete $arg{cmd} 
+    or croak "'cmd' is a required parameter\n";
+  my $env = delete $arg{env} || [];
+  my $url = delete $arg{url} || '';
+  my $freq = delete $arg{freq} || '';
   my $verbose = delete $arg{verbose};
   croak "Invalid arguments to gen_hash: " . join(',', keys %arg) if keys %arg;
   croak "Missing 'cmd' argument to gen_hash" unless $cmd;
   croak "Missing 'freq' argument to gen_hash" unless $cmd;
 
-  my $string = trim($cmd) . "\000" . ($freq || '');
+  my $string = join("\000", trim($cmd), $freq, $url, @$env);
   my $hash = sha256_base64( $string );
   print STDERR "+ gen_hash: string '$string' -> hash '$hash'\n" if $verbose;
   return $hash;

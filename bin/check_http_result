@@ -35,6 +35,11 @@ $np->add_arg(
   required => 1,
 );
 $np->add_arg(
+  spec => 'env|E=s@',
+  label => 'ENVIRONMENT VARIABLES',
+  help => 'Environment variables to set in remote host cron job',
+);
+$np->add_arg(
   spec => 'name|n=s',
   label => 'TESTNAME',
   help => 'Name to use for this test (unique per remote host)',
@@ -137,7 +142,10 @@ sub submit_remote_cronjob {
   my $cmd = $opts->cmd;
   my $name = $opts->name;
 
-  my $remote_cmd = qq(/usr/lib/nagios/plugins/nagios_http_cronjob -n $name -C \\"$cmd\\");
+  my $remote_cmd = qq(/usr/lib/nagios/plugins/nagios_http_cronjob -n $name -C \\"'$cmd'\\");
+  if ($opts->env && @{$opts->env}) {
+    $remote_cmd .= " --env $_" foreach @{$opts->env};
+  }
   $remote_cmd .= " --hostname "  . $opts->hostname;
   $remote_cmd .= " --freq " . $opts->freq if $opts->freq;
   $remote_cmd .= " --url "  . $opts->url  if $opts->url;

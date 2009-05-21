@@ -18,10 +18,11 @@ my $url = 'http://nagios/nagios-http';
 
 sub usage { die "usage: " . basename($0) . " [--freq <minutes>] [-u <url>] [-H hostname] -n <name> -C <cmd>\n"; }
 
-my ($cmd, $freq, $hostname, $name, $stdout, $verbose);
+my ($cmd, @env, $freq, $hostname, $name, $stdout, $verbose);
 usage
 unless GetOptions(
   'cmd|C=s'         => \$cmd,
+  'env|E=s@'        => \@env,
   'name|n=s'        => \$name,
   'freq|f=i'        => \$freq,
   'hostname|H=s'    => \$hostname,
@@ -41,6 +42,17 @@ if ($cmd =~ m! ^([-\w\s'",.;:@\#/\\\$=%&?&\*\(\)]+)$ !x) {
   $cmd = $1;
 } else {
   die "Invalid characters in cmd '$cmd'";
+}
+if (@env) {
+  my @untainted_env = ();
+  for my $env (@env) {
+    if ($env =~ m/^([-\w=]+)$/) {
+      push @untainted_env, $1;
+    } else {
+      die "Invalid characters in env '$env'";
+    }
+  }
+  @env = @untainted_env;
 }
 if ($hostname) {
   if ($hostname =~ m! ^([\w]+)$ !x) {
@@ -65,7 +77,9 @@ if ($url) {
 }
 
 # Generate hash from current settings
-my $hash = Nagios::HTTP::Util::gen_hash( cmd => $cmd, freq => $freq, verbose => $verbose );
+my $hash = Nagios::HTTP::Util::gen_hash( 
+  cmd => $cmd, freq => $freq, env => \@env, url => \$url, verbose => $verbose,
+);
 
 # Map frequency to cron style $minute $hour settings
 $freq ||= 5;
@@ -102,7 +116,14 @@ umask 0022;
 my $cronfile = "/etc/cron.d/nagios-http-$name";
 my $cronfh = IO::File->new( $cronfile, 'w' ) 
   or die "Cannot write to '$cronfile': $!\n";
-print $cronfh "PATH=/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/bin:/usr/bin\n\n$cronjob\n"
+print $cronfh "PATH=/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/bin:/usr/bin\n"
+  or die "Print to '$cronfile' failed: $!\n";
+if (@env) {
+  print $cronfh "$_\n" 
+    or die "Print to '$cronfile' failed: $!\n"
+      foreach @env;
+}
+print $cronfh "\n$cronjob\n"
   or die "Print to '$cronfile' failed: $!\n";
 $cronfh->close;
 chown 0, 0, $cronfile;
