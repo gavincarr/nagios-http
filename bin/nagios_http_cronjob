@@ -78,7 +78,7 @@ if ($url) {
 
 # Generate hash from current settings
 my $hash = Nagios::HTTP::Util::gen_hash( 
-  cmd => $cmd, freq => $freq, env => \@env, url => \$url, verbose => $verbose,
+  cmd => $cmd, freq => $freq, env => \@env, url => $url, verbose => $verbose,
 );
 
 # Map frequency to cron style $minute $hour settings

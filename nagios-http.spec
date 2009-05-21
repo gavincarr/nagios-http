@@ -1,7 +1,7 @@
 
 %define perl_sitelib /usr/lib/perl5/site_perl
 
-Summary: check_by_http plugin for nagios master
+Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
 Version: %{version}
 Release: 1%{org_tag}
@@ -15,8 +15,8 @@ Obsoletes: nagios-http
 Provides: nagios-http
 
 %description
-nagios-http provides a check_by_http nagios plugin, which can be
-used to check and collate results from nagios-http-remote instances.
+nagios-http-master provides a check_http_result nagios plugin, which can 
+be used to check and collate results from nagios-http-remote instances.
 
 %package -n nagios-http-common
 Summary: Common components for nagios-http
@@ -45,6 +45,7 @@ entries.
 %setup -n nagios-http-%{version}
 
 %build
+test "$RPM_BUILD_ROOT" != "/" && rm -rf $RPM_BUILD_ROOT
 
 %install
 mkdir -p %{buildroot}%{_sysconfdir}/httpd/conf.d

@@ -63,49 +63,61 @@ $np->add_arg(
   help  => 'URL to which remote results should be posted (may repeat)',
   default => 'http://nagios/nagios-http',
 );
+$np->add_arg(
+  spec => 'noop',
+  help  => "Run in noop mode i.e. don't actually execute the remote cmd",
+);
 $np->getopts;
-$np->shortname( uc $np->opts->name );
+my $opts = $np->opts;
+$np->shortname( uc $opts->name );
 
-print STDERR "\n" if $np->opts->verbose;
+if ($opts->verbose) {
+  print STDERR "\n";
+  printf STDERR "cmd '%s' unescapes to:\n    '%s'\n", $opts->cmd, unescape($opts->cmd);
+}
 
 my $hash = Nagios::HTTP::Util::gen_hash( 
-  cmd => unescape($np->opts->cmd), freq => $np->opts->freq, verbose => $np->opts->verbose );
+  cmd => unescape($opts->cmd), 
+  freq => $opts->freq, 
+  env => $opts->env,
+  url => $opts->url,
+  verbose => $opts->verbose );
 
-my $dir = $np->opts->dir;
+my $dir = $opts->dir;
 die "Invalid results directory '$dir'" unless -d $dir;
-$dir = File::Spec->catdir( $dir, $np->opts->hostname );
+$dir = File::Spec->catdir( $dir, $opts->hostname );
 -d $dir or umask(0007) && mkpath($dir);
 
-my $data_file = File::Spec->catfile( $dir, $np->opts->name );
+my $data_file = File::Spec->catfile( $dir, $opts->name );
 
 my $data = fetch_data($data_file);
 
 if (! $data) {
-  $data = submit_remote_cronjob($np->opts, $data_file);
+  $data = submit_remote_cronjob($opts, $data_file);
 }
 
 # If hashes (parameters) have changed, we should resubmit our remote cronjob
 elsif ($data->{hash} ne $hash) {
   print STDERR "+ Hashes differ: local $hash != remote $data->{hash} - attempting refresh\n" 
-    if $np->opts->verbose;
-  $data = submit_remote_cronjob($np->opts, $data_file);
+    if $opts->verbose;
+  $data = submit_remote_cronjob($opts, $data_file);
 }
 
 # Freshness check
-elsif (time - $data->{mtime} > $np->opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
+elsif (time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
   # Out of date - try resubmitting
   print STDERR "+ Freshness check failed - attempting refresh\n"
-    if $np->opts->verbose;
-  $data = submit_remote_cronjob($np->opts, $data_file);
-  if ($data && time - $data->{mtime} > $np->opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
+    if $opts->verbose;
+  $data = submit_remote_cronjob($opts, $data_file);
+  if ($data && time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
     print STDERR "+ Freshness check still failed - giving up\n"
-      if $np->opts->verbose;
+      if $opts->verbose;
     $np->nagios_die("Results too old (" . (time - $data->{mtime}) . "s) (or clocks wrong?)");
   }
 }
 
 # Return output, if available
-print STDERR "\n" if $np->opts->verbose;
+print STDERR "\n" if $opts->verbose;
 if ($data && $data->{output}) {
   my ($out1, $out2) = ($data->{output} =~ m/^(\S+)\s+(\S+)\s+/);
   $out1 =~ s/\W+//g;
@@ -149,9 +161,12 @@ sub submit_remote_cronjob {
   $remote_cmd .= " --hostname "  . $opts->hostname;
   $remote_cmd .= " --freq " . $opts->freq if $opts->freq;
   $remote_cmd .= " --url "  . $opts->url  if $opts->url;
-  print STDERR "+ Submitting remote cronjob with cmd: $remote_cmd\n" if $opts->verbose;
-  my $out = qx(ssh -t $hostname $remote_cmd);
-  print $out if $opts->verbose;
+  print STDERR "+ Submitting remote cronjob with cmd: $remote_cmd\n" 
+    if $opts->verbose || $opts->noop;
+  unless ($opts->noop) {
+    my $out = qx(ssh -t $hostname $remote_cmd);
+    print $out if $opts->verbose;
+  }
   sleep 1;
 
   # Retest data file
