@@ -87,17 +87,33 @@ if ($opts->log) {
   $logger = sub { Logger::Syslog::info( join(' ', @_) ) };
 }
 elsif ($verbose) {
-  $logger = sub { chomp $_[$#_]; print STDERR join(' ', @_) . "\n" };
+  $logger = sub { chomp $_[$#_]; print STDERR '+ ' . join(' ', @_) . "\n" };
 }
 
-$logger->( "cmd '%s' unescapes to:\n    '%s'\n", $opts->cmd, unescape($opts->cmd) );
+$logger->( sprintf "cmd '%s' unescapes to: '%s'", $opts->cmd, unescape($opts->cmd) );
+
+# Execute any `` environment values on the master, so hashes are consistent
+my @env;
+if ($opts->env && ref $opts->env) {
+  for my $e (@{$opts->env}) {
+    my ($key, $value) = split /=/, $e, 2;
+    if ($value =~ m/^`(.+)`$/) {
+      my $result = qx($1);
+      $result =~ s/\s+$//;
+      push @env, "$key=$result";
+    }
+    else {
+      push @env, $e;
+    }
+  }
+}
 
 my $hash = Nagios::HTTP::Util::gen_hash( 
   cmd       => unescape( $opts->cmd ),
   freq      => $opts->freq, 
-  env       => $opts->env,
+  env       => \@env,
   url       => $opts->url,
-  verbose   => $verbose,
+  logger    => $logger,
 );
 
 my $dir = $opts->dir;
@@ -114,19 +130,23 @@ if (! $data) {
 
 # If hashes (parameters) have changed, we should resubmit our remote cronjob
 elsif ($data->{hash} ne $hash) {
-  $logger->( "+ Hashes differ: local $hash != remote $data->{hash} - attempting refresh" );
+  $logger->( "Hashes differ: local $hash != remote $data->{hash} - attempting refresh" );
   $data = submit_remote_cronjob($opts, $data_file);
 }
 
 # Freshness check
 elsif (time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
   # Out of date - try resubmitting
-  $logger->( "+ Freshness check failed - attempting refresh" );
+  $logger->( "Freshness check failed - attempting refresh" );
   $data = submit_remote_cronjob($opts, $data_file);
   if ($data && time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
-    $logger->( "+ Freshness check still failed - giving up" );
+    $logger->( "Freshness check still failed - giving up" );
     $np->nagios_die("Results too old (" . (time - $data->{mtime}) . "s) (or clocks wrong?)");
   }
+}
+
+elsif ($verbose) {
+  $logger->( "Hashes match, checking data file $data_file output" );
 }
 
 # Return output, if available
@@ -148,7 +168,7 @@ else {
 
 sub unescape {
   my $cmd = shift;
-  $cmd =~ s/\\([\\"'])/$1/g;
+  $cmd =~ s/\\(.)/$1/g;
   return $cmd;
 }
 
@@ -173,7 +193,7 @@ sub submit_remote_cronjob {
   $remote_cmd .= " --hostname "  . $opts->hostname;
   $remote_cmd .= " --freq " . $opts->freq if $opts->freq;
   $remote_cmd .= " --url "  . $opts->url  if $opts->url;
-  $logger->( "+ Submitting remote cronjob with cmd: $remote_cmd" );
+  $logger->( "Submitting remote cronjob with cmd: $remote_cmd" );
   unless ($opts->noop) {
     my $out = qx(ssh -t $hostname $remote_cmd);
     print $out if $verbose;

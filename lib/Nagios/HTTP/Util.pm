@@ -21,13 +21,14 @@ sub gen_hash {
   my $url = delete $arg{url} || '';
   my $freq = delete $arg{freq} || '';
   my $verbose = delete $arg{verbose};
+  my $logger = delete $arg{logger} || sub { print STDERR "+ $_[0]\n" if $verbose };
   croak "Invalid arguments to gen_hash: " . join(',', keys %arg) if keys %arg;
   croak "Missing 'cmd' argument to gen_hash" unless $cmd;
   croak "Missing 'freq' argument to gen_hash" unless $cmd;
 
-  my $string = join("\000", trim($cmd), $freq, $url, @$env);
+  my $string = join("\f", trim($cmd), $freq, $url, @$env);
   my $hash = sha256_base64( $string );
-  print STDERR "+ gen_hash: string '$string' -> hash '$hash'\n" if $verbose;
+  $logger->("gen_hash: string '$string' -> hash '$hash'");
   return $hash;
 }
 
