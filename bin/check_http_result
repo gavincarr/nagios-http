@@ -1,25 +1,29 @@
 #!/usr/bin/perl
 #
-# Nagios plugin implementing remote test setup via ssh, and local
-# result collation and reporting.
+# Nagios plugin implementing remote test setup via ssh, and local result 
+# collation and reporting.
 # 
 # Interface intended to be similar to the standard check_by_ssh.
 #
 
 use strict;
 use Nagios::Plugin;
-use Nagios::HTTP::Util;
-use YAML qw(LoadFile);
 use File::Path;
 use File::Spec;
+use YAML qw(LoadFile);
+
+use Nagios::HTTP::Util;
 
 my $FRESHNESS_FUDGE_SECONDS = 120;
+my $VERSION = '0.7';
+my $RESULT_DIR = '/var/www/nagios-http';
+#my $STAGE_DIR = '/var/lib/nagios-http';
 
 my $np = Nagios::Plugin->new(
-  usage => q(Usage: %s -H <hostname> -C <cmd> -n <testname> [--freq <mins>] [-d <resultdir>] [-u <posturl>]),
-  version => '0.01',
+  usage => q(Usage: %s -H <hostname> -C <cmd> -n <testname> [--freq <mins>] [--env <var=value>] [-u <posturl>]),
+  version => $VERSION,
   url => 'http://www.openfusion.com.au/labs/nagios/',
-  blurb => q(This plugin checks remote command output via http.),
+  blurb => q(This plugin checks asynchronous remote command output submitted via http.),
 );
 
 $np->add_arg(
@@ -36,8 +40,8 @@ $np->add_arg(
 );
 $np->add_arg(
   spec => 'env|E=s@',
-  label => 'ENVIRONMENT VARIABLES',
-  help => 'Environment variables to set in remote host cron job',
+  label => 'VAR=VALUE',
+  help => 'Environment variable to set for remote command execution (may repeat)',
 );
 $np->add_arg(
   spec => 'name|n=s',
@@ -55,13 +59,17 @@ $np->add_arg(
   spec => 'dir|d=s',
   label => 'RESULT_DIR',
   help  => 'Local directory to check for results',
-  default => '/var/www/nagios-http',
+  default => $RESULT_DIR,
 );
 $np->add_arg(
   spec => 'url|u=s',
   label => 'URL',
-  help  => 'URL to which remote results should be posted (may repeat)',
+  help  => 'URL to which remote results should be posted',
   default => 'http://nagios/nagios-http',
+);
+$np->add_arg(
+  spec => 'log',
+  help  => "Log debug output to syslog (implies --verbose)",
 );
 $np->add_arg(
   spec => 'noop',
@@ -70,18 +78,27 @@ $np->add_arg(
 $np->getopts;
 my $opts = $np->opts;
 $np->shortname( uc $opts->name );
+my $verbose = $opts->verbose || $opts->noop || $opts->log;
 
-if ($opts->verbose) {
-  print STDERR "\n";
-  printf STDERR "cmd '%s' unescapes to:\n    '%s'\n", $opts->cmd, unescape($opts->cmd);
+# Setup $logger
+my $logger = sub {};
+if ($opts->log) {
+  require Logger::Syslog; 
+  $logger = sub { Logger::Syslog::info( join(' ', @_) ) };
+}
+elsif ($verbose) {
+  $logger = sub { chomp $_[$#_]; print STDERR join(' ', @_) . "\n" };
 }
 
+$logger->( "cmd '%s' unescapes to:\n    '%s'\n", $opts->cmd, unescape($opts->cmd) );
+
 my $hash = Nagios::HTTP::Util::gen_hash( 
-  cmd => unescape($opts->cmd), 
-  freq => $opts->freq, 
-  env => $opts->env,
-  url => $opts->url,
-  verbose => $opts->verbose );
+  cmd       => unescape( $opts->cmd ),
+  freq      => $opts->freq, 
+  env       => $opts->env,
+  url       => $opts->url,
+  verbose   => $verbose,
+);
 
 my $dir = $opts->dir;
 die "Invalid results directory '$dir'" unless -d $dir;
@@ -89,8 +106,7 @@ $dir = File::Spec->catdir( $dir, $opts->hostname );
 -d $dir or umask(0007) && mkpath($dir);
 
 my $data_file = File::Spec->catfile( $dir, $opts->name );
-
-my $data = fetch_data($data_file);
+my $data = read_data($data_file);
 
 if (! $data) {
   $data = submit_remote_cronjob($opts, $data_file);
@@ -98,26 +114,22 @@ if (! $data) {
 
 # If hashes (parameters) have changed, we should resubmit our remote cronjob
 elsif ($data->{hash} ne $hash) {
-  print STDERR "+ Hashes differ: local $hash != remote $data->{hash} - attempting refresh\n" 
-    if $opts->verbose;
+  $logger->( "+ Hashes differ: local $hash != remote $data->{hash} - attempting refresh" );
   $data = submit_remote_cronjob($opts, $data_file);
 }
 
 # Freshness check
 elsif (time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
   # Out of date - try resubmitting
-  print STDERR "+ Freshness check failed - attempting refresh\n"
-    if $opts->verbose;
+  $logger->( "+ Freshness check failed - attempting refresh" );
   $data = submit_remote_cronjob($opts, $data_file);
   if ($data && time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
-    print STDERR "+ Freshness check still failed - giving up\n"
-      if $opts->verbose;
+    $logger->( "+ Freshness check still failed - giving up" );
     $np->nagios_die("Results too old (" . (time - $data->{mtime}) . "s) (or clocks wrong?)");
   }
 }
 
 # Return output, if available
-print STDERR "\n" if $opts->verbose;
 if ($data && $data->{output}) {
   my ($out1, $out2) = ($data->{output} =~ m/^(\S+)\s+(\S+)\s+/);
   $out1 =~ s/\W+//g;
@@ -140,7 +152,7 @@ sub unescape {
   return $cmd;
 }
 
-sub fetch_data {
+sub read_data {
   my $data_file = shift;
   return unless -f $data_file;
   return LoadFile( $data_file );
@@ -161,15 +173,14 @@ sub submit_remote_cronjob {
   $remote_cmd .= " --hostname "  . $opts->hostname;
   $remote_cmd .= " --freq " . $opts->freq if $opts->freq;
   $remote_cmd .= " --url "  . $opts->url  if $opts->url;
-  print STDERR "+ Submitting remote cronjob with cmd: $remote_cmd\n" 
-    if $opts->verbose || $opts->noop;
+  $logger->( "+ Submitting remote cronjob with cmd: $remote_cmd" );
   unless ($opts->noop) {
     my $out = qx(ssh -t $hostname $remote_cmd);
-    print $out if $opts->verbose;
+    print $out if $verbose;
   }
   sleep 1;
 
   # Retest data file
-  return fetch_data($data_file);
+  return read_data($data_file);
 }
 
