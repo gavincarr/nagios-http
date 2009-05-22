@@ -77,6 +77,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Tue May 19 2009 Gavin Carr <gavin@openfusion.com.au> 0.6.1-1
+- Add --log syslog support to check_http_result.
+
 * Tue May 19 2009 Gavin Carr <gavin@openfusion.com.au> 0.6-1
 - Add --env support to check_http_result and nagios_http_cronjob.
 
