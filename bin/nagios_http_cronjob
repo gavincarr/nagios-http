@@ -38,7 +38,7 @@ if ($name =~ m/^([-\w]+)$/) {
 } else {
   die "Invalid characters in name '$name'";
 }
-if ($cmd =~ m! ^([-\w\s'",.;:@\#/\\\$=%&?&\*\(\)]+)$ !x) {
+if ($cmd =~ m! ^([-\w\s'",.;:@\#/\\\$=%&?&\*\(\){}]+)$ !x) {
   $cmd = $1;
 } else {
   die "Invalid characters in cmd '$cmd'";
@@ -129,6 +129,11 @@ $cronfh->close;
 chown 0, 0, $cronfile;
 
 # Also, try and run the command manually to avoid having to wait for cron
+delete $ENV{CDPATH};
 $ENV{PATH} = '/bin:/usr/bin:/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins';
+for (@env) {
+  my ($key, $val) = split /=/, $_, 2;
+  $ENV{$key} = $val;
+}
 system($croncmd);
 
