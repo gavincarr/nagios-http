@@ -15,7 +15,7 @@ use YAML qw(LoadFile);
 use Nagios::HTTP::Util;
 
 my $FRESHNESS_FUDGE_SECONDS = 120;
-my $VERSION = '0.6.1';
+my $VERSION = '0.6.2';
 my $RESULT_DIR = '/var/www/nagios-http';
 
 my $np = Nagios::Plugin->new(
