@@ -18,7 +18,7 @@ my $url = 'http://nagios/nagios-http';
 
 sub usage { die "usage: " . basename($0) . " [--freq <minutes>] [-u <url>] [-H hostname] -n <name> -C <cmd>\n"; }
 
-my ($cmd, @env, $freq, $hostname, $name, $stdout, $verbose);
+my ($cmd, @env, $freq, $hostname, $report_hostname, $name, $stdout, $verbose);
 usage
 unless GetOptions(
   'cmd|C=s'         => \$cmd,
@@ -26,6 +26,7 @@ unless GetOptions(
   'name|n=s'        => \$name,
   'freq|f=i'        => \$freq,
   'hostname|H=s'    => \$hostname,
+  'report-hostname|report|R=s'    => \$report_hostname,
   'stdout'          => \$stdout,
   'url|u=s'         => \$url,
   'verbose|v+'      => \$verbose,
@@ -59,6 +60,13 @@ if ($hostname) {
     $hostname = $1;
   } else {
     die "Invalid characters in hostname '$hostname'";
+  }
+}
+if ($report_hostname) {
+  if ($report_hostname =~ m! ^([\w]+)$ !x) {
+    $report_hostname = $1;
+  } else {
+    die "Invalid characters in report_hostname '$report_hostname'";
   }
 }
 if ($freq) {
@@ -103,8 +111,9 @@ else {
 
 # Output
 $cmd =~ s/%/\\%/g;
-my $hostname_arg = $hostname ? "-H $hostname" : '';
-my $croncmd = "$cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash --url $url $hostname_arg";
+my $cron_hostname = $report_hostname || $hostname;
+my $cron_hostname_arg = $cron_hostname ? "-H $cron_hostname" : '';
+my $croncmd = "$cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash --url $url $cron_hostname_arg";
 my $cronjob = "$min $hour * * * nagios $croncmd\n";
 if ($stdout) {
   print $cronjob;
@@ -113,7 +122,7 @@ if ($stdout) {
 
 # Setup cron file
 umask 0022;
-my $cronfile = "/etc/cron.d/nagios-http-$name";
+my $cronfile = "/etc/cron.d/nagios-http-$name" . ($report_hostname ? "-$report_hostname" : '');
 my $cronfh = IO::File->new( $cronfile, 'w' ) 
   or die "Cannot write to '$cronfile': $!\n";
 print $cronfh "PATH=/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/bin:/usr/bin\n"

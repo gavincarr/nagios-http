@@ -28,7 +28,7 @@ my $np = Nagios::Plugin->new(
 $np->add_arg(
   spec => 'hostname|H=s',
   label => 'ADDRESS',
-  help => 'Hostname or ip address',
+  help => 'Hostname or ip address on which to execute remote command',
   required => 1,
 );
 $np->add_arg(
@@ -74,10 +74,18 @@ $np->add_arg(
   spec => 'noop',
   help  => "Run in noop mode i.e. don't actually execute the remote cmd",
 );
+$np->add_arg(
+  spec => 'report-hostname|report|R=s',
+  label => 'HOSTNAME',
+  help => 'Hostname to use for reporting results (defaults to -H hostname)',
+);
 $np->getopts;
 my $opts = $np->opts;
 $np->shortname( uc $opts->name );
 my $verbose = $opts->verbose || $opts->noop || $opts->log;
+
+my $hostname = $opts->hostname;
+my $report_hostname = $opts->get('report-hostname') || $hostname;
 
 # Setup $logger
 my $logger = sub {};
@@ -117,7 +125,7 @@ my $hash = Nagios::HTTP::Util::gen_hash(
 
 my $dir = $opts->dir;
 die "Invalid results directory '$dir'" unless -d $dir;
-$dir = File::Spec->catdir( $dir, $opts->hostname );
+$dir = File::Spec->catdir( $dir, $report_hostname );
 -d $dir or umask(0007) && mkpath($dir);
 
 my $data_file = File::Spec->catfile( $dir, $opts->name );
@@ -181,7 +189,6 @@ sub read_data {
 sub submit_remote_cronjob {
   my ($opts, $data_file) = @_;
   
-  my $hostname = $opts->hostname;
   my $cmd = $opts->cmd;
   my $name = $opts->name;
 
@@ -189,7 +196,9 @@ sub submit_remote_cronjob {
   if ($opts->env && @{$opts->env}) {
     $remote_cmd .= " --env $_" foreach @{$opts->env};
   }
-  $remote_cmd .= " --hostname "  . $opts->hostname;
+  $remote_cmd .= " --hostname " . $hostname;
+  $remote_cmd .= " --report-hostname " . $report_hostname 
+    if $report_hostname && $report_hostname ne $hostname;
   $remote_cmd .= " --freq " . $opts->freq if $opts->freq;
   $remote_cmd .= " --url "  . $opts->url  if $opts->url;
   $logger->( "Submitting remote cronjob with cmd: $remote_cmd" );
