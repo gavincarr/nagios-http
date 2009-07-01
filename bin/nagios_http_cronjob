@@ -38,7 +38,7 @@ if ($name =~ m/^([-\w]+)$/) {
 } else {
   die "Invalid characters in name '$name'";
 }
-if ($cmd =~ m! ^([-\w\s'",.;:@\#/\\\$=%&?&\*\(\){}]+)$ !x) {
+if ($cmd =~ m! ^([-\w\s'",.;:@\#/\\\$=%&?&\+\*\(\){}]+)$ !x) {
   $cmd = $1;
 } else {
   die "Invalid characters in cmd '$cmd'";
