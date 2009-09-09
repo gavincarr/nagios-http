@@ -15,6 +15,7 @@ use Nagios::HTTP::Util;
 
 my $max_freq = 12 * 60;
 my $url = 'http://nagios/nagios-http';
+my $cronjob_path = '/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/sbin:/usr/sbin:/bin:/usr/bin';
 
 sub usage { die "usage: " . basename($0) . " [--freq <minutes>] [-u <url>] [-H hostname] -n <name> -C <cmd>\n"; }
 
@@ -125,7 +126,7 @@ umask 0022;
 my $cronfile = "/etc/cron.d/nagios-http-$name" . ($report_hostname ? "-$report_hostname" : '');
 my $cronfh = IO::File->new( $cronfile, 'w' ) 
   or die "Cannot write to '$cronfile': $!\n";
-print $cronfh "PATH=/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/bin:/usr/bin\n"
+print $cronfh "PATH=$cronjob_path\n"
   or die "Print to '$cronfile' failed: $!\n";
 if (@env) {
   print $cronfh "$_\n" 
@@ -139,7 +140,7 @@ chown 0, 0, $cronfile;
 
 # Also, try and run the command manually to avoid having to wait for cron
 delete $ENV{CDPATH};
-$ENV{PATH} = '/bin:/usr/bin:/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins';
+$ENV{PATH} = $cronjob_path;
 for (@env) {
   my ($key, $val) = split /=/, $_, 2;
   $ENV{$key} = $val;
