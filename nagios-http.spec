@@ -77,6 +77,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Wed Nov 18 2009 Gavin Carr <gavin@openfusion.com.au> 0.7.4-1
+- Add '|' to valid cmd characters in nagios_http_cronjob.
+
 * Wed Sep 09 2009 Gavin Carr <gavin@openfusion.com.au> 0.7.2-1
 - Add /sbin and /usr/sbin to $cronjob_path in nagios_http_cronjob.
 
