@@ -77,6 +77,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Thu Jan 07 2010 Gavin Carr <gavin@openfusion.com.au> 0.7.5-1
+- Allow hyphens in hostnames in nagios_http_cronjob.
+
 * Wed Nov 18 2009 Gavin Carr <gavin@openfusion.com.au> 0.7.4-1
 - Add '|' to valid cmd characters in nagios_http_cronjob.
 
