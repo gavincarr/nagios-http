@@ -77,6 +77,10 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Fri Feb 12 2010 Gavin Carr <gavin@openfusion.com.au> 0.7.6-1
+- Add UA use_env to nagios_http_result to support proxies.
+- Add support to nagios_http_result for readings args and env variables from a config.
+
 * Thu Jan 07 2010 Gavin Carr <gavin@openfusion.com.au> 0.7.5-1
 - Allow hyphens in hostnames in nagios_http_cronjob.
 
