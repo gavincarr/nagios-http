@@ -94,7 +94,10 @@ if ($opts->log) {
   $logger = sub { Logger::Syslog::info( join(' ', @_) ) };
 }
 elsif ($verbose) {
-  $logger = sub { chomp $_[$#_]; print STDERR '+ ' . join(' ', @_) . "\n" };
+  $logger = sub { 
+    print STDERR '+ ' . join(' ', @_);
+    print STDERR "\n" unless substr($_[$#_],-1) eq "\n";
+  };
 }
 
 $logger->( sprintf "cmd '%s' unescapes to: '%s'", $opts->cmd, unescape($opts->cmd) );
