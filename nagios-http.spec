@@ -1,5 +1,6 @@
 
 %define perl_sitelib /usr/lib/perl5/site_perl
+%define version 0.7.8
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
@@ -60,7 +61,8 @@ install -m0755 bin/* %{buildroot}/usr/lib/nagios/plugins
 %pre -n nagios-http-remote 
 # Add a nagios user/group 
 if ! id -u nagios >/dev/null 2>&1; then
-  groupadd -r nagios && useradd -r -m -g nagios nagios
+  getent group nagios || groupadd -r nagios
+  useradd -r -g nagios nagios
 fi
 
 %files
@@ -77,6 +79,12 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Mon May 09 2011 Gavin Carr <gavin@openfusion.com.au> 0.7.8-1
+- Tweak %pre script to handle case where nagios group exists but user doesn't.
+
+* Tue Mar 22 2011 Gavin Carr <gavin@openfusion.com.au> 0.7.7-1
+- Tweak verbose logger sub to avoid readonly-variable-modification warning.
+
 * Fri Feb 12 2010 Gavin Carr <gavin@openfusion.com.au> 0.7.6-1
 - Add UA use_env to nagios_http_result to support proxies.
 - Add support to nagios_http_result for readings args and env variables from a config.
