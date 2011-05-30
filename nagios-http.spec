@@ -1,6 +1,6 @@
 
 %define perl_sitelib %(eval "`perl -V:installsitelib`"; echo $installsitelib)
-%define version 0.7.10
+%define version 0.7.11
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
@@ -14,6 +14,8 @@ BuildRoot: %{_tmppath}/nagios-http
 BuildArch: noarch
 Obsoletes: nagios-http
 Provides: nagios-http
+# This requires shouldn't be necessary, but there are bogus packages around
+# (rpmforge perl-Test-Mock-LWP) that claim to provide perl(LWP::UserAgent) etc.
 
 %description
 nagios-http-master provides a check_http_result nagios plugin, which can 
@@ -39,6 +41,7 @@ Requires: nagios-plugins, nagios-http-common = %{version}
 Requires: perl-suidperl
 %endif
 BuildArch: noarch
+Requires: perl-libwww-perl
 
 %description -n nagios-http-remote
 nagios-http-remote provides the web infrastructure for remote 
@@ -82,6 +85,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Mon May 30 2011 Gavin Carr <gavin@openfusion.com.au> 0.7.11-1
+- Add explicit requires on perl-libwww-perl to workaround problems.
+
 * Mon May 30 2011 Gavin Carr <gavin@openfusion.com.au> 0.7.10-1
 - More perl_sitelib fixes for rhel6.
 
