@@ -1,6 +1,6 @@
 
-%define perl_sitelib /usr/lib/perl5/site_perl
-%define version 0.7.9
+%define perl_sitelib %(eval "`perl -V:installsitelib`"; echo $installsitelib)
+%define version 0.7.10
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
@@ -82,6 +82,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Mon May 30 2011 Gavin Carr <gavin@openfusion.com.au> 0.7.10-1
+- More perl_sitelib fixes for rhel6.
+
 * Mon May 30 2011 Gavin Carr <gavin@openfusion.com.au> 0.7.9-1
 - Add %dist to release to support diff rhel6 site_perl, bump to 0.7.9.
 
