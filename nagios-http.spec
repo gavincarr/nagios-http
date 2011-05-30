@@ -1,11 +1,11 @@
 
 %define perl_sitelib /usr/lib/perl5/site_perl
-%define version 0.7.8
+%define version 0.7.9
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
 Version: %{version}
-Release: 1%{org_tag}
+Release: 1%{org_tag}%{dist}
 Source0: nagios-http-%{version}.tar.gz
 License: GPL
 Group: Application/System
@@ -22,7 +22,7 @@ be used to check and collate results from nagios-http-remote instances.
 %package -n nagios-http-common
 Summary: Common components for nagios-http
 Version: %{version}
-Release: 1%{org_tag}
+Release: 1%{org_tag}%{dist}
 Group: Application/System
 BuildArch: noarch
 
@@ -32,9 +32,12 @@ Common components (libraries) for nagios-http.
 %package -n nagios-http-remote
 Summary: Remote nagios-http web infrastructure and cron job helper 
 Version: %{version}
-Release: 1%{org_tag}
+Release: 1%{org_tag}%{dist}
 Group: Application/System
-Requires: perl-suidperl, nagios-plugins, nagios-http-common = %{version}
+Requires: nagios-plugins, nagios-http-common = %{version}
+%if %{rhel} < 6
+Requires: perl-suidperl
+%endif
 BuildArch: noarch
 
 %description -n nagios-http-remote
@@ -79,6 +82,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Mon May 30 2011 Gavin Carr <gavin@openfusion.com.au> 0.7.9-1
+- Add %dist to release to support diff rhel6 site_perl, bump to 0.7.9.
+
 * Mon May 09 2011 Gavin Carr <gavin@openfusion.com.au> 0.7.8-1
 - Tweak %pre script to handle case where nagios group exists but user doesn't.
 
