@@ -1,6 +1,6 @@
 
 %define perl_sitelib %(eval "`perl -V:installsitelib`"; echo $installsitelib)
-%define version 0.7.11
+%define version 0.8
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
@@ -85,6 +85,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Wed Nov 23 2011 Gavin Carr <gavin@openfusion.com.au> 0.8-1
+- Limit default url argument to nagios_http_result.
+
 * Mon May 30 2011 Gavin Carr <gavin@openfusion.com.au> 0.7.11-1
 - Add explicit requires on perl-libwww-perl to workaround problems.
 
