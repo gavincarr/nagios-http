@@ -14,12 +14,11 @@ use IO::File;
 use Nagios::HTTP::Util;
 
 my $max_freq = 12 * 60;
-my $url = 'http://nagios/nagios-http';
 my $cronjob_path = '/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/sbin:/usr/sbin:/bin:/usr/bin';
 
 sub usage { die "usage: " . basename($0) . " [--freq <minutes>] [-u <url>] [-H hostname] -n <name> -C <cmd>\n"; }
 
-my ($cmd, @env, $freq, $hostname, $report_hostname, $name, $stdout, $verbose);
+my ($cmd, @env, $freq, $hostname, $report_hostname, $name, $stdout, $verbose, $url);
 usage
 unless GetOptions(
   'cmd|C=s'         => \$cmd,
@@ -87,7 +86,8 @@ if ($url) {
 
 # Generate hash from current settings
 my $hash = Nagios::HTTP::Util::gen_hash( 
-  cmd => $cmd, freq => $freq, env => \@env, url => $url, verbose => $verbose,
+  cmd => $cmd, freq => $freq, env => \@env, verbose => $verbose,
+  $url ? ( url => $url ) : (),
 );
 
 # Map frequency to cron style $minute $hour settings
@@ -114,7 +114,8 @@ else {
 $cmd =~ s/%/\\%/g;
 my $cron_hostname = $report_hostname || $hostname;
 my $cron_hostname_arg = $cron_hostname ? "-H $cron_hostname" : '';
-my $croncmd = "$cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash --url $url $cron_hostname_arg";
+my $url_arg = $url ? "--url $url " : '';
+my $croncmd = "$cmd | /usr/lib/nagios/plugins/nagios_http_result -n $name -h $hash $url_arg $cron_hostname_arg";
 my $cronjob = "$min $hour * * * nagios $croncmd\n";
 if ($stdout) {
   print $cronjob;
