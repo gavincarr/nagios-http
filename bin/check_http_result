@@ -64,7 +64,6 @@ $np->add_arg(
   spec => 'url|u=s',
   label => 'URL',
   help  => 'URL to which remote results should be posted',
-  default => 'http://nagios/nagios-http',
 );
 $np->add_arg(
   spec => 'log',
