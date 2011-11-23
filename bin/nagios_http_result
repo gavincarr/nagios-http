@@ -44,9 +44,10 @@ usage unless $hash && $name;
 # The following args can also be set via an [args] section in the config file
 if ($config->{args}) {
   $hostname ||= $config->{args}->{hostname};
-  $url      ||= $config->{args}->{url} || 'http://nagios/nagios-http';
+  $url      ||= $config->{args}->{url};
   $verbose  ||= $config->{args}->{verbose};
 }
+$url ||= 'http://nagios/nagios-http';
 
 unless ($output) {
   local $/ = undef;
