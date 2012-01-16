@@ -161,7 +161,7 @@ elsif ($data->{hash} ne $hash) {
 }
 
 # Freshness check
-elsif (time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
+elsif ($opts->freq && (time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS)) {
   # Out of date - try resubmitting
   $logger->( "Freshness check failed - attempting refresh" );
   $data = submit_remote_cronjob($opts, $data_file);
