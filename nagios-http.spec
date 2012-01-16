@@ -37,9 +37,7 @@ Version: %{version}
 Release: 1%{org_tag}%{dist}
 Group: Application/System
 Requires: nagios-plugins, nagios-http-common = %{version}
-%if %{rhel} < 6
 Requires: perl-suidperl
-%endif
 BuildArch: noarch
 Requires: perl-libwww-perl
 
