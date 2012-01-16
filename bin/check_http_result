@@ -50,9 +50,23 @@ $np->add_arg(
 );
 $np->add_arg(
   spec => 'freq|f=i',
-  label => 'MINUTES',
+  label => 'FREQUENCY',
   help  => 'How often to run this command on the remote host (in minutes)',
-  default => 5,
+);
+$np->add_arg(
+  spec => 'minute|mi=s',
+  label => 'MINUTES',
+  help  => 'When (cron minutes field) to run this command on the remote host',
+);
+$np->add_arg(
+  spec => 'hour|hh=s',
+  label => 'HOURS',
+  help  => 'When (cron hours field) to run this command on the remote host',
+);
+$np->add_arg(
+  spec => 'dow|dayofweek=s',
+  label => 'DOW',
+  help  => 'When (cron day-of-week field) to run this command on the remote host',
 );
 $np->add_arg(
   spec => 'dir|d=s',
@@ -120,6 +134,9 @@ if ($opts->env && ref $opts->env) {
 my $hash = Nagios::HTTP::Util::gen_hash( 
   cmd       => unescape( $opts->cmd ),
   freq      => $opts->freq, 
+  minute    => $opts->minute, 
+  hour      => $opts->hour, 
+  dow       => $opts->dow, 
   env       => \@env,
   url       => $opts->url,
   logger    => $logger,
@@ -201,8 +218,11 @@ sub submit_remote_cronjob {
   $remote_cmd .= " --hostname " . $hostname;
   $remote_cmd .= " --report-hostname " . $report_hostname 
     if $report_hostname && $report_hostname ne $hostname;
-  $remote_cmd .= " --freq " . $opts->freq if $opts->freq;
-  $remote_cmd .= " --url "  . $opts->url  if $opts->url;
+  $remote_cmd .= " --freq "   . $opts->freq   if $opts->freq;
+  $remote_cmd .= " --minute " . $opts->minute if $opts->minute;
+  $remote_cmd .= " --hour "   . $opts->hour   if $opts->hour;
+  $remote_cmd .= " --dow "    . $opts->dow    if $opts->dow;
+  $remote_cmd .= " --url "    . $opts->url    if $opts->url;
   $logger->( "Submitting remote cronjob with cmd: $remote_cmd" );
   unless ($opts->noop) {
     my $out = qx(ssh -t $hostname $remote_cmd);
