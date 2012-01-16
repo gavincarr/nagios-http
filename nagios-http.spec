@@ -1,6 +1,6 @@
 
 %define perl_sitelib %(eval "`perl -V:installsitelib`"; echo $installsitelib)
-%define version 0.8
+%define version 0.9
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
@@ -83,6 +83,10 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Mon Jan 16 2012 Gavin Carr <gavin@openfusion.com.au> 0.9-1
+- Add support for --minute/hour/dow parameters to nagios_http_cronjob.
+- Add support for --minute/hour/dow parameters to check_http_result.
+
 * Wed Nov 23 2011 Gavin Carr <gavin@openfusion.com.au> 0.8-1
 - Limit default url argument to nagios_http_result.
 
