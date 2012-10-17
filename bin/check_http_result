@@ -151,20 +151,20 @@ my $data_file = File::Spec->catfile( $dir, $opts->name );
 my $data = read_data($data_file);
 
 if (! $data) {
-  $data = submit_remote_cronjob($opts, $data_file);
+  submit_remote_cronjob($opts, $data_file);
 }
 
 # If hashes (parameters) have changed, we should resubmit our remote cronjob
 elsif ($data->{hash} ne $hash) {
-  $logger->( "Hashes differ: local $hash != remote $data->{hash} - attempting refresh" );
-  $data = submit_remote_cronjob($opts, $data_file);
+  $logger->( "Hashes differ: calculated $hash != current $data->{hash} - attempting refresh" );
+  submit_remote_cronjob($opts, $data_file);
 }
 
 # Freshness check
 elsif ($opts->freq && (time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS)) {
   # Out of date - try resubmitting
   $logger->( "Freshness check failed - attempting refresh" );
-  $data = submit_remote_cronjob($opts, $data_file);
+  submit_remote_cronjob($opts, $data_file);
   if ($data && time - $data->{mtime} > $opts->freq * 60 + $FRESHNESS_FUDGE_SECONDS) {
     $logger->( "Freshness check still failed - giving up" );
     $np->nagios_die("Results too old (" . (time - $data->{mtime}) . "s) (or clocks wrong?)");
@@ -228,9 +228,5 @@ sub submit_remote_cronjob {
     my $out = qx(ssh -t $hostname $remote_cmd);
     print $out if $verbose;
   }
-  sleep 1;
-
-  # Retest data file
-  return read_data($data_file);
 }
 
