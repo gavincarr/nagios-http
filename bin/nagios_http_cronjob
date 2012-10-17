@@ -10,13 +10,14 @@ use strict;
 use File::Basename;
 use Getopt::Long qw(:config no_ignore_case bundling);
 use IO::File;
+use YAML qw(Dump);
 
 use Nagios::HTTP::Util;
 
 my $max_freq = 12 * 60;
 my $cronjob_path = '/usr/lib/nagios/plugins:/usr/lib64/nagios/plugins:/sbin:/usr/sbin:/bin:/usr/bin';
 
-sub usage { 
+sub usage {
   print "$_[0]\n" if @_;
   die "usage: " . basename($0) . " [--freq <mins>] [--hour <hour>] [--minute <min>] [-u <url>] [-H <hostname>] -n <name> -C <cmd>\n";
 }
@@ -97,16 +98,22 @@ if ($url) {
 }
 
 # Generate hash from current settings
-my $hash = Nagios::HTTP::Util::gen_hash( 
-  cmd => $cmd, freq => $freq, env => \@env, verbose => $verbose,
+my $hash = Nagios::HTTP::Util::gen_hash(
+  cmd       => $cmd,
+  freq      => $freq,
+  minute    => $minute,
+  hour      => $hour,
+  dow       => $dow,
+  env       => \@env,
   $url ? ( url => $url ) : (),
+  verbose => $verbose,
 );
 
 # Map frequency to cron style $minute $hour settings
 $freq ||= 5;
 my $cron = '';
 if ($freq >= 60) {
-  die "Error: frequency '$freq' is too large - max is $max_freq\n" 
+  die "Error: frequency '$freq' is too large - max is $max_freq\n"
     if $freq > $max_freq;
   die "Error: frequency must be a factor of 60 if greater than 60\n"
     if $freq % 60;
@@ -136,12 +143,12 @@ if ($stdout) {
 # Setup cron file
 umask 0022;
 my $cronfile = "/etc/cron.d/nagios-http-$name" . ($report_hostname ? "-$report_hostname" : '');
-my $cronfh = IO::File->new( $cronfile, 'w' ) 
+my $cronfh = IO::File->new( $cronfile, 'w' )
   or die "Cannot write to '$cronfile': $!\n";
 print $cronfh "PATH=$cronjob_path\n"
   or die "Print to '$cronfile' failed: $!\n";
 if (@env) {
-  print $cronfh "$_\n" 
+  print $cronfh "$_\n"
     or die "Print to '$cronfile' failed: $!\n"
       foreach @env;
 }
@@ -150,12 +157,9 @@ print $cronfh "\n$cronjob\n"
 $cronfh->close;
 chown 0, 0, $cronfile;
 
-# Also, try and run the command manually to avoid having to wait for cron
-delete $ENV{CDPATH};
-$ENV{PATH} = $cronjob_path;
-for (@env) {
-  my ($key, $val) = split /=/, $_, 2;
-  $ENV{$key} = $val;
-}
-system($croncmd);
+# Output status data
+print Dump {
+  status    => 'OK',
+  hash      => $hash,
+};
 
