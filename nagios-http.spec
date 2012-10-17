@@ -1,6 +1,6 @@
 
 %define perl_sitelib %(eval "`perl -V:installsitelib`"; echo $installsitelib)
-%define version 0.9.1
+%define version 0.9.2
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
@@ -83,6 +83,11 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Wed Oct 17 2012 Gavin Carr <gavin@openfusion.com.au> 0.9.2-1
+- Fix bug with nagios_http_cronjob missing parameters in gen_hash.
+- Remove auto-execution of remote job from nagios_http_cronjob, since
+  it bypasses command time/date restrictions.
+
 * Tue Jan 17 2012 Gavin Carr <gavin@openfusion.com.au> 0.9.1-1
 - Fix undef error in check_http_result.
 
