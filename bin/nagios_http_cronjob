@@ -99,7 +99,7 @@ if ($url) {
 
 # Generate hash from current settings
 my $hash = Nagios::HTTP::Util::gen_hash(
-  cmd       => $cmd,
+  cmd       => unescape( $cmd ),
   freq      => $freq,
   minute    => $minute,
   hour      => $hour,
@@ -162,4 +162,13 @@ print Dump {
   status    => 'OK',
   hash      => $hash,
 };
+
+# -------------------------------------------------------------------------
+# Subroutines
+
+sub unescape {
+  my $cmd = shift;
+  $cmd =~ s/\\(.)/$1/g;
+  return $cmd;
+}
 
