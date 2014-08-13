@@ -57,7 +57,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/httpd/conf.d
 mkdir -p %{buildroot}%{perl_sitelib}/Nagios/HTTP
 mkdir -p %{buildroot}/usr/lib/nagios/plugins
 mkdir -p %{buildroot}%{_localstatedir}/www/nagios-http
-install -m0644 conf/nagios-http.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
+install -m0644 conf/nagios-http-apache.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 #install -m0644 conf/nagios-http-remote.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 install -m0644 lib/Nagios/HTTP/Util.pm %{buildroot}%{perl_sitelib}/Nagios/HTTP
 install -m0755 bin/* %{buildroot}/usr/lib/nagios/plugins
@@ -83,6 +83,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Wed Aug 13 2014 Gavin Carr <gavin@openfusion.com.au> 0.9.3-1
+- Fix bug with nagios_http_cronjob not unescaping cmd before gen_hash.
+
 * Wed Oct 17 2012 Gavin Carr <gavin@openfusion.com.au> 0.9.2-1
 - Fix bug with nagios_http_cronjob missing parameters in gen_hash.
 - Remove auto-execution of remote job from nagios_http_cronjob, since
