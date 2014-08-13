@@ -1,21 +1,21 @@
 
 %define perl_sitelib %(eval "`perl -V:installsitelib`"; echo $installsitelib)
 %define version 0.9.3
+%define relnum 2
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
 Version: %{version}
-Release: 1%{org_tag}%{dist}
+Release: %{relnum}%{org_tag}%{dist}
 Source0: nagios-http-%{version}.tar.gz
 License: GPL
 Group: Application/System
-Requires: nagios-http-common = %{version}, httpd
-BuildRoot: %{_tmppath}/nagios-http
+Requires: nagios-http-common = %{version}
+Requires: httpd
+BuildRoot: %{_tmppath}/%{name}-%{version}
 BuildArch: noarch
 Obsoletes: nagios-http
 Provides: nagios-http
-# This requires shouldn't be necessary, but there are bogus packages around
-# (rpmforge perl-Test-Mock-LWP) that claim to provide perl(LWP::UserAgent) etc.
 
 %description
 nagios-http-master provides a check_http_result nagios plugin, which can 
@@ -24,7 +24,7 @@ be used to check and collate results from nagios-http-remote instances.
 %package -n nagios-http-common
 Summary: Common components for nagios-http
 Version: %{version}
-Release: 1%{org_tag}%{dist}
+Release: %{relnum}%{org_tag}%{dist}
 Group: Application/System
 BuildArch: noarch
 
@@ -34,11 +34,15 @@ Common components (libraries) for nagios-http.
 %package -n nagios-http-remote
 Summary: Remote nagios-http web infrastructure and cron job helper 
 Version: %{version}
-Release: 1%{org_tag}%{dist}
+Release: %{relnum}%{org_tag}%{dist}
 Group: Application/System
-Requires: nagios-plugins, nagios-http-common = %{version}
+Requires: nagios-http-common = %{version}
+%if %rhel < 7
 Requires: perl-suidperl
+%endif
 BuildArch: noarch
+# The next requires shouldn't be necessary, but there are bogus packages around
+# (rpmforge perl-Test-Mock-LWP) that claim to provide perl(LWP::UserAgent) etc.
 Requires: perl-libwww-perl
 
 %description -n nagios-http-remote
@@ -57,7 +61,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/httpd/conf.d
 mkdir -p %{buildroot}%{perl_sitelib}/Nagios/HTTP
 mkdir -p %{buildroot}/usr/lib/nagios/plugins
 mkdir -p %{buildroot}%{_localstatedir}/www/nagios-http
-install -m0644 conf/nagios-http-apache.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
+install -m0644 conf/nagios-http-apache.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/nagios-http.conf
 #install -m0644 conf/nagios-http-remote.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 install -m0644 lib/Nagios/HTTP/Util.pm %{buildroot}%{perl_sitelib}/Nagios/HTTP
 install -m0755 bin/* %{buildroot}/usr/lib/nagios/plugins
@@ -73,6 +77,8 @@ fi
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/nagios-http.conf
 /usr/lib/nagios/plugins/check_http_result
 %dir %attr(2750,nagios,apache) %{_localstatedir}/www/nagios-http
+%doc README
+%doc conf/nagios-http-nginx.conf
 
 %files -n nagios-http-common
 %{perl_sitelib}/Nagios/HTTP/Util.pm
