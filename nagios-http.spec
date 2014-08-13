@@ -1,6 +1,6 @@
 
 %define perl_sitelib %(eval "`perl -V:installsitelib`"; echo $installsitelib)
-%define version 0.9.2
+%define version 0.9.3
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
