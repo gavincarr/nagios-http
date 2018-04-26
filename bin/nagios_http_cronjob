@@ -69,14 +69,14 @@ if (@env) {
   @env = @untainted_env;
 }
 if ($hostname) {
-  if ($hostname =~ m! ^([-\w]+)$ !x) {
+  if ($hostname =~ m! ^([-.\w]+)$ !x) {
     $hostname = $1;
   } else {
     die "Invalid characters in hostname '$hostname'";
   }
 }
 if ($report_hostname) {
-  if ($report_hostname =~ m! ^([-\w]+)$ !x) {
+  if ($report_hostname =~ m! ^([-.\w]+)$ !x) {
     $report_hostname = $1;
   } else {
     die "Invalid characters in report_hostname '$report_hostname'";
