@@ -1,7 +1,7 @@
 
 %define perl_sitelib %(eval "`perl -V:installsitelib`"; echo $installsitelib)
-%define version 0.9.3
-%define relnum 2
+%define version 0.9.4
+%define relnum 1
 
 Summary: check_http_result plugin for nagios master
 Name: nagios-http-master
@@ -89,6 +89,9 @@ fi
 %attr(0755,root,root) /usr/lib/nagios/plugins/nagios_http_result
 
 %changelog
+* Thu Apr 26 2018 Gavin Carr <gavin@openfusion.com.au> 0.9.4-1
+- Update to version 0.9.4.
+
 * Wed Aug 13 2014 Gavin Carr <gavin@openfusion.com.au> 0.9.3-1
 - Fix bug with nagios_http_cronjob not unescaping cmd before gen_hash.
 
